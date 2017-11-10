@@ -353,7 +353,7 @@ while 1 == 1:
 			
 			bytesToRead = ser2.inWaiting()
 			
-			if bytesToRead > 4:  #cada vez que recibe la cuenta desde arduino-flujometro
+			if bytesToRead > 64:  #cada vez que recibe la cuenta desde arduino-flujometro
 				ser2.flushInput()
 				print('(hemos quemado bytes retrasantes) ')
 				
@@ -417,7 +417,7 @@ while 1 == 1:
 
 	# deshabilita vavula y agradece
 	elif process_id == 3:
-		#ser2.write(0)  # deshabilitar valvula
+		
 		sleep(0.5)
 		display_agradece()
 		lcd_agradece()
