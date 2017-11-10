@@ -352,14 +352,14 @@ while 1 == 1:
 			tiempo_desde_inicio_servida = hora_actual - hora_de_re_inicio_servida
 			
 			bytesToRead = ser2.inWaiting()
-			# ser2.flushInput()
-			# delay(0.5)
-			if bytesToRead > 64:  #cada vez que recibe la cuenta desde arduino-flujometro
-				ser2.flushInput()
-				print('(hemos quemado bytes retrasantes) ')
+			ser2.flushInput()
+			sleep(0.5)
+			# if bytesToRead > 64:  #cada vez que recibe la cuenta desde arduino-flujometro
+			#	ser2.flushInput()
+			#	print('(hemos quemado bytes retrasantes) ')
 				
 			if bytesToRead > 0:  #cada vez que recibe la cuenta desde arduino-flujometro
-				sleep(0.20)     #esperamos a que llegue todo el mensaje 
+				# sleep(0.20)     #esperamos a que llegue todo el mensaje 
 				print("ahora voy a leer e imprimir lo que recibo.... ")
 				try:
 					string_igua = str(ser2.readline(),'utf-8')
@@ -384,7 +384,7 @@ while 1 == 1:
 					print('string error')
 			
 			if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
-				servidos_lt = 0.9 * ((servidos_total - counter_al_inicio) * 2640)/1500
+				servidos_lt = 1.8 * ((servidos_total - counter_al_inicio) * 2640)/1500
 				display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				# print("mande el comando al display")
