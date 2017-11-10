@@ -383,7 +383,7 @@ while 1 == 1:
 					print('string error')
 			
 			if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
-				servidos_lt = 0.9 * ((servidos_total - counter_al_inicio) * 2640)/2000
+				servidos_lt = 1.8 * ((servidos_total - counter_al_inicio) * 2640)/2000
 				display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				# print("mande el comando al display")
