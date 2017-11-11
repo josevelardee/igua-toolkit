@@ -67,7 +67,7 @@ void setup()
 void loop()
 {
    
-   if((millis() - oldTime) > 300)    // Only process counters once per second
+   if((millis() - oldTime) > 800)    // Only process counters once per second
   { 
     // Disable the interrupt while calculating flow rate and sending the value to
     // the host
@@ -78,7 +78,7 @@ void loop()
     // that to scale the output. We also apply the calibrationFactor to scale the output
     // based on the number of pulses per second per units of measure (litres/minute in
     // this case) coming from the sensor.
-    flowRate = ((300.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
+    flowRate = ((800.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
     
     // Note the time this processing pass was executed. Note that because we've
     // disabled interrupts the millis() function won't actually be incrementing right
@@ -114,6 +114,8 @@ void loop()
     // Print the cumulative total of litres flowed since starting
     // Serial.print("  Output Liquid Quantity: ");             // Output separator
     Serial.println(totalMilliLitres);
+    
+    /*
     if (oldTotalMillilitres != totalMilliLitres)
       {
       before = millis();
@@ -121,7 +123,7 @@ void loop()
     if ((millis() - before) > 43200000 ) //     12 horas sin uso?
       {totalMilliLitres = 0;}
       // Serial.println("mL");
-    
+    */
  
 
     // Reset the pulse counter so we can start incrementing again

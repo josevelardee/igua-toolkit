@@ -380,11 +380,13 @@ while 1 == 1:
 				secondcycle = 1  #flag que indica que ya se corrio una vuelta de inicializon			
 				try:
 					servidos_total = int(string_igua)
+					print('recibido ok "int" ')
+					
 				except ValueError:
-					print('string error')
+					print('no se recibió "int" ')
 			
 			if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
-				servidos_lt = 0.9 * ((servidos_total - counter_al_inicio) * 2640)/1500
+				servidos_lt = 0.9 * (7/8) * (100/105)* ((servidos_total - counter_al_inicio) * 2640)/1500
 				display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				# print("mande el comando al display")
