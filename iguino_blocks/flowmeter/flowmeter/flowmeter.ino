@@ -78,7 +78,7 @@ void loop()
     // that to scale the output. We also apply the calibrationFactor to scale the output
     // based on the number of pulses per second per units of measure (litres/minute in
     // this case) coming from the sensor.
-    flowRate = ((800.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
+    flowRate = (250 * float(pulseCount) / (millis() - oldTime));
     
     // Note the time this processing pass was executed. Note that because we've
     // disabled interrupts the millis() function won't actually be incrementing right
@@ -89,21 +89,21 @@ void loop()
     // Divide the flow rate in litres/minute by 60 to determine how many litres have
     // passed through the sensor in this 1 second interval, then multiply by 1000 to
     // convert to millilitres.
-    flowMilliLitres = (flowRate / 60) * 1000;
+    flowMilliLitres = flowRate * 1.0;
     
     // Add the millilitres passed in this second to the cumulative total
 
     oldTotalMillilitres = totalMilliLitres;
     totalMilliLitres += flowMilliLitres;
       
-    unsigned int frac;
+    // unsigned int frac;
     
     // Print the flow rate for this second in litres / minute
     // Serial.print("Flow rate: ");
     // Serial.print(int(flowRate));  // Print the integer part of the variable
     // Serial.print(".");             // Print the decimal point
     // Determine the fractional part. The 10 multiplier gives us 1 decimal place.
-    frac = (flowRate - int(flowRate)) * 10;
+    // frac = (flowRate - int(flowRate)) * 10;
     // Serial.print(frac, DEC) ;      // Print the fractional part of the variable
     // Serial.print("L/min");
     // Print the number of litres flowed in this second
