@@ -17,6 +17,9 @@
 # para clonar la carpeta de github a local:
 # git clone http://github.com/kikomayorga/igua_toolkit/
 
+# usando el Nexxt, la ip de la maquina suele ser:
+# 192.168.0.100
+
 
 #importando modulos genericos
 from time import sleep
@@ -360,7 +363,7 @@ while 1 == 1:
 				print('(hemos quemado bytes retrasantes) ')
 				
 			if bytesToRead > 0:  #cada vez que recibe la cuenta desde arduino-flujometro
-				sleep(0.20)     #esperamos a que llegue todo el mensaje 
+				sleep(0.05)     #esperamos a que llegue todo el mensaje 
 				print("ahora voy a leer e imprimir lo que recibo.... ")
 				try:
 					string_igua = str(ser2.readline(),'utf-8')
@@ -387,9 +390,11 @@ while 1 == 1:
 					print('no se recibió "int" ')
 			
 			if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
-				servidos_lt = 0.9 * (7/8) * (100/300)* ((servidos_total - counter_al_inicio) * 2640)/1500
+				servidos_lt = 0.9 * (7/8) * (50/300)* ((servidos_total - counter_al_inicio) * 2640)/1500
 				display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
 				lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
+				sleep(0.05)
+				
 				# print("mande el comando al display")
 				
 			# el boton resetea el tiempo maximo y enciende la válvula

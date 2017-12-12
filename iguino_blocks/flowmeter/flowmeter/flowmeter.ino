@@ -67,7 +67,7 @@ void setup()
 void loop()
 {
    
-   if((millis() - oldTime) > 800)    // Only process counters once per second
+   if((millis() - oldTime) > 400)    // Only process counters once per second
   { 
     // Disable the interrupt while calculating flow rate and sending the value to
     // the host
