@@ -275,7 +275,7 @@ while 1 == 1:
 			now = int(time.time())
 			process_id = 1
 			
-	#acepta monedas
+	#aceptando monedas
 	elif process_id == 1:
 		set_UV(0)
 		set_accepting(0)
@@ -290,45 +290,46 @@ while 1 == 1:
 			ferros = int(string_igua)
 			ferrosacumulados = ferrosacumulados + ferros
 			solesacumulados = ferrosacumulados / 10.0
+			before = int(time.time()) 
+			
 			if modo_maquina == 0:
 				display_acumula_linear(solesacumulados)
 				lcd_acumula_linear(solesacumulados)
 			if modo_maquina == 1:
 				display_acumula_pwyw(solesacumulados)
 				lcd_acumula_pwyw(solesacumulados)
-			before = int(time.time()) 
+		
+		
 		
 		#TIMEOUT 
 		now = int(time.time())
 		diff = now - before
+		print("diff vale:", cuenta_de_ciclos)
 
-		if diff > 10:
-			process_id = 2
-			cuenta_de_ciclos = cuenta_de_ciclos + 1
-			# print("van n monedas:", cuenta_de_ciclos)
-			# print("pasaremos al prcid 2")
-			diff = 0
-			before = int(time.time()) 
-				
-		
+
 		#tap_button pressed
 		button_state = GPIO.input(button)
-		if button_state == GPIO.LOW:
+		if (button_state == GPIO.LOW) or (diff > 10):
 			diff = 0
 			print ("switching to PID2")
 			time.sleep(0.5)	
+			diff = 0
+			before = int(time.time())
+			process_id = 2	
 			latch = 1
 			servidos_lt = 0
 			precio = 0.5
 			servidos_total = 0
 			counter_al_inicio = 0		           
 			secondcycle = 0
-			set_valve(1) #habilitar valvula
+			
 			process_id = 2
 		else:
 			process_id = 1
 			# print ("button is NOT PRESSED")	
 		
+		
+			
 	
 	# habilitada vavula y muestra litros
 	elif process_id == 2:
