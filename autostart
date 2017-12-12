@@ -4,4 +4,4 @@
 @pcmanfm --desktop --profile LXDE-pi
 @xscreensaver -no-splash
 @point-rpi
-# @/usr/bin/python3 /home/pi/igua-toolkit/igua_fest.py
+@/usr/bin/python3 /home/pi/igua-toolkit/igua_fest.py
