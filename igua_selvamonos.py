@@ -31,20 +31,23 @@ REMOTE_SERVER = "www.google.com"
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-
+'''
 button = 4				# GPIO04, pin nro 07 
 valve_relay = 17		# GPIO17, pin nro 11   
 button2 = 27			# GPIO27, pin nro 13
 spritz_relay = 22		# GPIO22, pin nro 15
 coinhibitor_relay = 23	# GPIO23, pin nro 16
 UV_relay = 18			# GPIO18, pin nro 12
+'''
 
+'''
 GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(button2, GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(valve_relay, GPIO.OUT)
 GPIO.setup(spritz_relay, GPIO.OUT)
 GPIO.setup(coinhibitor_relay, GPIO.OUT)
 GPIO.setup(UV_relay, GPIO.OUT)
+'''
 
 #para carriots
 from urllib.request import urlopen, Request
@@ -71,23 +74,9 @@ class Client (object):
         self.data = dumps(data).encode('utf8')
         request = Request(Client.api_url, self.data, self.headers)     
         self.response = urlopen(request)
-        return self.response
-        
-def rc_time(pipin):
-    measurement = 0
-    GPIO.setup(pipin, GPIO.OUT)
-    GPIO.output(pipin, GPIO.LOW)
-    sleep(0.1)
-
-    GPIO.setup(pipin, GPIO.IN)
-
-    while GPIO.input(pipin) == GPIO.LOW:
-        measurement += 1
-
-    return measurement
-    
-    
+        return self.response    
 #fin para carriots
+
 
 # declaramos una función que la usaremos mas adelante para 
 # validar conexion disponible
@@ -101,42 +90,22 @@ def is_connected():
         pass
     return False
 
+ser_igua01 =  serial.Serial('/dev/ttyACM0',9600,timeout = None) 
+# ser_igua02 =  serial.Serial('/dev/ttyACM1',9600,timeout = None) 
+# ser_igua03 =  serial.Serial('/dev/ttyACM2',9600,timeout = None) 
+# ser_counter = serial.Serial('/dev/ttyACM3',9600,timeout = None) 
 
-
-		
-# ser = serial.Serial('/dev/ttyACM1',9600,timeout = 0) #puerto del acceptor 
-ser_flw =  serial.Serial('/dev/ttyACM0',9600,timeout = None) #puerto del flujometro es ser_flw 
-ser_lcd =  serial.Serial('/dev/ttyACM3',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS) # puerto de lcd es ser_lcd 
-ser_tds = serial.Serial('/dev/ttyACM1',9600,timeout = None) # puerto de tds es ser_tds
-ser_psi = serial.Serial('/dev/ttyACM2',9600,timeout = None) # puerto de psi es ser_psi
-
+'''
 #modulos custom
 from igua_display import startdisplay, refreshdisplay 
 from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
 from igua_display import display_acumula_pwyw, display_acumula_linear
 from igua_display import display_servidos_lt, display_agradece 
 
-# import flowmeter
-# import valve
-
-#from display + coinacceptor
-
-last = 0.0
-running = 1
-
-
-solesacumulados = 0   			#transaction-wise accumulator
-ferrosacumulados = 0  			#transaction-wise accumulator
-cuenta_de_ciclos = 0				#transactions counter on eeprom	
-
-process_id = 0                  #
-modo_maquina = 0  # 1: pay what you want , 0: linear mode
-button_state = 0
-now = 0
-now_1 = 0
-
 #setup
 startdisplay()
+
+'''
 		
 #main loop
 
@@ -149,6 +118,8 @@ client_carriots = Client(apikey)
 # curl --header carriots.apikey:13f622d642b12cc336fa6bfde36e1561c6ac7eea19bd88d7c32246d0fca45691 http://api.carriots.com/streams/?device=IGUA01@kikomayorga.kikomayorga
 
 
+
+'''
 #para lcd
 def lcd_bienvenida_linear(now):
 	if  now == 0:
@@ -215,21 +186,83 @@ def lcd_ahorradas_bot(ahorradas_bot,diff):
 	
 def lcd_agradece():
 	ser_lcd.write('gracias!!!! igua ague pe ! '.encode())	
+'''
+def envia(maquina, modo, volumen):
+	global device
+	global client_carriots
+	timestamp = int(mktime(datetime.utcnow().timetuple()))
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": maquina, "modo": modo, "servido litros": volumen} } 
+	print(data)
+	if is_connected() == True:
+		carriots_response = client_carriots.send(data)
+		print('conexion ok!')
+		print(carriots_response.read())
+	else:
+		print('no connectivity available')
 
-def read_tds():
-	global string_tds
-	global ser_tds
-	bytesToRead = ser_tds.inWaiting()
+
+
+def read_igua1():
+	global string_igua1
+	global ser_igua01
+	global string_igua1_array
+	bytesToRead = ser_igua01.inWaiting()
 	if bytesToRead > 0:
 		sleep(0.1)
-		bytesToRead = ser_tds.inWaiting()
-		print("bytes to read on ser_tds: ", bytesToRead)
-		string_tds = str(ser_tds.readline(),'utf-8')
-		print("received on ser_tds: ", string_tds)
-		string_tds = string_tds.lstrip('r')
-		string_tds = string_tds.strip('\n\r')
-		string_tds = string_tds.strip('\r\n')		
+		bytesToRead = ser_igua01.inWaiting()
+		print("bytes to read on ser_igua01: ", bytesToRead)
+		string_igua1 = str(ser_igua01.readline(),'utf-8')
+		print("received on ser_igua01: ", string_igua1)
+		string_igua1 = string_igua1.lstrip('r')
+		string_igua1 = string_igua1.strip('\n\r')
+		string_igua1 = string_igua1.strip('\r\n')
+		string_igua1 = string_igua1.replace(' psi // ', ' ')
+		string_igua1_array = string_igua1.split(' ')
+		igua_01_modo = string_igua1_array[0]
+		igua_01_volumen = string_igua1_array[1]
+		envia(1, igua_01_modo, igua_01_volumen)
+				
+def read_igua2():
+	global string_igua2
+	global ser_igua02
+	bytesToRead = ser_igua02.inWaiting()
+	if bytesToRead > 0:
+		sleep(0.1)
+		bytesToRead = ser_igua02.inWaiting()
+		print("bytes to read on ser_igua02: ", bytesToRead)
+		string_igua2 = str(ser_igua01.readline(),'utf-8')
+		print("received on ser_igua2: ", string_igua2)
+		string_igua2 = string_igua2.lstrip('r')
+		string_igua2 = string_igua2.strip('\n\r')
+		string_igua2 = string_igua2.strip('\r\n')
+		string_igua2 = string_igua2.replace(' psi // ', ' ')
+		string_igua2_array = string_igua2.split(' ')
+		igua_02_modo = string_igua2_array[0]
+		igua_02_volumen = string_igua2_array[1]
+		envia(2, igua_02_modo, igua_02_volumen)
 
+
+def read_igua3():
+	global string_igua3
+	global ser_igua03
+	
+	bytesToRead = ser_igua03.inWaiting()
+	if bytesToRead > 0:
+		sleep(0.1)
+		bytesToRead = ser_igua03.inWaiting()
+		print("bytes to read on ser_igua03: ", bytesToRead)
+		string_igua3 = str(ser_igua03.readline(),'utf-8')
+		print("received on ser_igua3: ", string_igua3)
+		string_igua3 = string_igua3.lstrip('r')
+		string_igua3 = string_igua3.strip('\n\r')
+		string_igua3 = string_igua3.strip('\r\n')
+		string_igua3 = string_igua3.replace(' psi // ', ' ')
+		string_igua3_array = string_igua3.split(' ')
+		igua_03_modo = string_igua3_array[0]
+		igua_03_volumen = string_igua3_array[1]
+		envia(3, igua_03_modo, igua_03_volumen)
+		
+'''
 def read_psi():
 	global last_string_psi_1
 	global last_string_psi_2
@@ -315,8 +348,8 @@ def read_flw():
 		string_flw = string_flw.lstrip('r')
 		string_flw = string_flw.strip('\n\r')
 		string_flw = string_flw.strip('\r\n')
-		
-		
+'''		
+'''		
 servidos_lt = 0
 servidos_lt_old = 0
 servidos_litros_older = 0
@@ -333,7 +366,13 @@ last_string_psi_4 = "default string"
 last_string_psi_3 = "default string"
 last_string_psi_2 = "default string"
 last_string_psi_1 = "default string"
-string_tds = "default string"
+
+'''
+string_igua1 = "default string"
+string_igua2 = "default string"
+string_igua3 = "default string"
+'''
+
 string_psi = "default string"
 string_flw = "0"
 diff = 0
@@ -344,6 +383,8 @@ string_psi_v2 = 0
 string_psi_psi2 = 0
 string_psi_v3 = 0 
 string_psi_psi3 = 0
+'''
+
 
 sleep(2)
 
@@ -352,36 +393,38 @@ while 1 == 1:
 	# ser_flw.flushInput()
 	sleep(0.3)
 		
-	servidos_total = int(string_flw)
-	servidos_litros_older = servidos_lt_old
-	servidos_lt_old = servidos_lt
-	servidos_lt = 0.9 * ((servidos_total) * 2640)/(22*2000)
-
-	ahorradas_bot = servidos_lt / 0.75
-	# diff = 10 - diff
-	loopcounter = loopcounter + 1
-		
-	read_psi()
-	clean_string_psi()
-	update_globalvars_psi()
-	read_tds()
-	read_flw()
+	# servidos_total = int(string_igua1) + int()
 	
+	# ahorradas_bot = servidos_lt / 0.75
+		
+	read_igua1()
+#	read_igua2()
+#	read_igua3()
+
+	
+	'''
 	if int(loopcounter/int(2))%3 == 0:
 		lcd_servidos_lt((servidos_lt),diff)
 	if int(loopcounter/int(2))%3 == 1:
 		lcd_ahorradas_bot(ahorradas_bot,diff)
 	if int(loopcounter/int(2))%3 == 2:
 		ser_lcd.write('mAs agua pura!'.encode())
-				
+	'''			
+	'''
 	if (servidos_lt_old == servidos_lt) and (servidos_litros_older != servidos_lt_old):			
+	'''
+	
+	#HABILITARÉ !!!!!
+	
+	''''
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		
-		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f'), "maquina": "2", "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_tds} }
-		print(data)
+		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f'), "maquina": "2", "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_igua1} }   # cuidado ! string_igua2 !!!!
+ 		print(data)
 		if is_connected() == True:
 			carriots_response = client_carriots.send(data)
 			print('conexion ok!')
 			print(carriots_response.read())
 		else:
 			print('no connectivity available')
+	'''
