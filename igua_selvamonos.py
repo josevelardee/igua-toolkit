@@ -1,3 +1,5 @@
+cuentabotellas = 1000000
+
 #!/usr/bin/python3 import os
 
 # sleep(15)
@@ -93,7 +95,10 @@ def is_connected():
 ser_igua01 =  serial.Serial('/dev/ttyACM0',9600,timeout = None) 
 # ser_igua02 =  serial.Serial('/dev/ttyACM1',9600,timeout = None) 
 # ser_igua03 =  serial.Serial('/dev/ttyACM2',9600,timeout = None) 
-# ser_counter = serial.Serial('/dev/ttyACM3',9600,timeout = None) 
+ser_counter = serial.Serial('/dev/ttyACM1',9600,timeout = 0.5) 
+
+
+
 
 '''
 #modulos custom
@@ -188,8 +193,18 @@ def lcd_agradece():
 	ser_lcd.write('gracias!!!! igua ague pe ! '.encode())	
 '''
 def envia(maquina, modo, volumen):
+	global cuentabotellas
 	global device
 	global client_carriots
+	cuentabotellas = cuentabotellas + int(volumen)
+	print('el volumen es (normal): ' + volumen)
+	print('el volumen es (string): ' + str(volumen))
+	
+	ser_counter.write(("~  " + str(int(cuentabotellas/650)).zfill(4) + "    ").encode('ascii'))  #  )
+		
+	print('vamos sirviendo volumen: ' + volumen)
+	print('vamos sirviendo mililitros: ' + str(cuentabotellas))
+	print('vamos ahorrando botellas: ' + str(int(cuentabotellas/650)))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": maquina, "modo": modo, "servido litros": volumen} } 
 	print(data)
@@ -199,6 +214,7 @@ def envia(maquina, modo, volumen):
 		print(carriots_response.read())
 	else:
 		print('no connectivity available')
+		
 
 
 
@@ -216,11 +232,13 @@ def read_igua1():
 		string_igua1 = string_igua1.lstrip('r')
 		string_igua1 = string_igua1.strip('\n\r')
 		string_igua1 = string_igua1.strip('\r\n')
-		string_igua1 = string_igua1.replace(' psi // ', ' ')
+		string_igua1 = string_igua1.replace('maquina: 1  servido: ', '')
+		string_igua1 = string_igua1.replace(' modo: ', ' ')
 		string_igua1_array = string_igua1.split(' ')
-		igua_01_modo = string_igua1_array[0]
-		igua_01_volumen = string_igua1_array[1]
+		igua_01_modo = string_igua1_array[1]
+		igua_01_volumen = string_igua1_array[0]
 		envia(1, igua_01_modo, igua_01_volumen)
+		
 				
 def read_igua2():
 	global string_igua2
@@ -237,8 +255,8 @@ def read_igua2():
 		string_igua2 = string_igua2.strip('\r\n')
 		string_igua2 = string_igua2.replace(' psi // ', ' ')
 		string_igua2_array = string_igua2.split(' ')
-		igua_02_modo = string_igua2_array[0]
-		igua_02_volumen = string_igua2_array[1]
+		igua_02_modo = string_igua2_array[1]
+		igua_02_volumen = string_igua2_array[0]
 		envia(2, igua_02_modo, igua_02_volumen)
 
 
@@ -258,8 +276,8 @@ def read_igua3():
 		string_igua3 = string_igua3.strip('\r\n')
 		string_igua3 = string_igua3.replace(' psi // ', ' ')
 		string_igua3_array = string_igua3.split(' ')
-		igua_03_modo = string_igua3_array[0]
-		igua_03_volumen = string_igua3_array[1]
+		igua_03_modo = string_igua3_array[1]
+		igua_03_volumen = string_igua3_array[0]
 		envia(3, igua_03_modo, igua_03_volumen)
 		
 '''
@@ -414,17 +432,3 @@ while 1 == 1:
 	if (servidos_lt_old == servidos_lt) and (servidos_litros_older != servidos_lt_old):			
 	'''
 	
-	#HABILITARÉ !!!!!
-	
-	''''
-		timestamp = int(mktime(datetime.utcnow().timetuple()))
-		
-		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f'), "maquina": "2", "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_igua1} }   # cuidado ! string_igua2 !!!!
- 		print(data)
-		if is_connected() == True:
-			carriots_response = client_carriots.send(data)
-			print('conexion ok!')
-			print(carriots_response.read())
-		else:
-			print('no connectivity available')
-	'''

@@ -90,7 +90,7 @@ void write_text(){
 
 // Scrolling Text the inData string on a 32x16 DMD 
 void display_text(){
-    Serial.println(inData);
+    // Serial.println(inData);
     // dmd.drawMarquee(inData,index,(32*1)-1,0); // This uses the Freeduino 32x16 DMD
     // dmd.drawString( 0,0, "Hello,", 5, GRAPHICS_NORMAL );
     dmd.drawString( 0,0, inData, 16, GRAPHICS_NORMAL );
