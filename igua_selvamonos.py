@@ -1,4 +1,4 @@
-cuentabotellas = 1000000
+cuentabotellas = 0
 
 #!/usr/bin/python3 import os
 
@@ -27,6 +27,7 @@ import time
 import serial
 import re
 import socket
+import datetime
 REMOTE_SERVER = "www.google.com"
 
 # configuaracion de entradas/saldas del RPI
@@ -92,13 +93,14 @@ def is_connected():
         pass
     return False
 
+ser_counter =  serial.Serial('/dev/ttyACM3',9600,timeout = 0.5) 
+# sleep(1)
 ser_igua01 =  serial.Serial('/dev/ttyACM0',9600,timeout = None) 
-# ser_igua02 =  serial.Serial('/dev/ttyACM1',9600,timeout = None) 
-# ser_igua03 =  serial.Serial('/dev/ttyACM2',9600,timeout = None) 
-ser_counter = serial.Serial('/dev/ttyACM1',9600,timeout = 0.5) 
-
-
-
+# sleep(1)
+ser_igua03 =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
+# sleep(1)
+ser_igua02 =  serial.Serial('/dev/ttyACM1',9600,timeout = None) 
+# sleep(1)
 
 '''
 #modulos custom
@@ -200,13 +202,23 @@ def envia(maquina, modo, volumen):
 	print('el volumen es (normal): ' + volumen)
 	print('el volumen es (string): ' + str(volumen))
 	
-	ser_counter.write(("~  " + str(int(cuentabotellas/650)).zfill(4) + "    ").encode('ascii'))  #  )
-		
+	ser_counter.write(("~     " + str(int(cuentabotellas/650)).zfill(4) + "   ").encode('ascii'))  #  )
+
 	print('vamos sirviendo volumen: ' + volumen)
 	print('vamos sirviendo mililitros: ' + str(cuentabotellas))
 	print('vamos ahorrando botellas: ' + str(int(cuentabotellas/650)))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": maquina, "modo": modo, "servido litros": volumen} } 
+	
+	fd = open('IGUA_SELVAMONOS.csv','a')
+	fd.write('timestamp:,' + str(timestamp) +',máquina:,' + str(maquina) + ',modo:,' + str(modo) + ',volumen:,' + str(volumen) )
+	fd.close()
+	'''
+	file = open('IGUA_SELVAMONOS.txt','w') 
+	file.write('timestamp: ' + str(timestamp) +' maquina: ' + str(maquina) + ' modo: ' + str(modo) + ' volumen: ' + str(volumen) ) 
+	file.close() 	
+	'''
+	
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": maquina, "modo_info":"m0: 300ml, m1: 500ml, m2: nuevoTT, m3: TTinfinito, m4: enjuague", "modo": modo, "servido litros": volumen} } 
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
@@ -248,12 +260,13 @@ def read_igua2():
 		sleep(0.1)
 		bytesToRead = ser_igua02.inWaiting()
 		print("bytes to read on ser_igua02: ", bytesToRead)
-		string_igua2 = str(ser_igua01.readline(),'utf-8')
+		string_igua2 = str(ser_igua02.readline(),'utf-8')
 		print("received on ser_igua2: ", string_igua2)
 		string_igua2 = string_igua2.lstrip('r')
 		string_igua2 = string_igua2.strip('\n\r')
 		string_igua2 = string_igua2.strip('\r\n')
-		string_igua2 = string_igua2.replace(' psi // ', ' ')
+		string_igua2 = string_igua2.replace('maquina: 1  servido: ', '')
+		string_igua2 = string_igua2.replace(' modo: ', ' ')
 		string_igua2_array = string_igua2.split(' ')
 		igua_02_modo = string_igua2_array[1]
 		igua_02_volumen = string_igua2_array[0]
@@ -274,7 +287,8 @@ def read_igua3():
 		string_igua3 = string_igua3.lstrip('r')
 		string_igua3 = string_igua3.strip('\n\r')
 		string_igua3 = string_igua3.strip('\r\n')
-		string_igua3 = string_igua3.replace(' psi // ', ' ')
+		string_igua3 = string_igua3.replace('maquina: 1  servido: ', '')
+		string_igua3 = string_igua3.replace(' modo: ', ' ')
 		string_igua3_array = string_igua3.split(' ')
 		igua_03_modo = string_igua3_array[1]
 		igua_03_volumen = string_igua3_array[0]
@@ -416,8 +430,11 @@ while 1 == 1:
 	# ahorradas_bot = servidos_lt / 0.75
 		
 	read_igua1()
-#	read_igua2()
-#	read_igua3()
+#	sleep(0.3)
+	read_igua2()
+#	sleep(0.3)
+	read_igua3()
+#	sleep(0.3)
 
 	
 	'''
