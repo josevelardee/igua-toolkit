@@ -85,12 +85,12 @@ void loop()
     int mililitros = int(losMililitros);
     String mensaje1 = "maquina: 1  servido: " + String(mililitros);
     String mensaje2 = " modo: " + String(modo);
-    b1_old = b1; b1 = digitalRead(8); if(b1-b1_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=0; orden = 100; totalMilliLitres=0; digitalWrite(13, HIGH); }
-    b2_old = b2; b2 = digitalRead(9); if(b2-b2_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=1; orden = 200; totalMilliLitres=0; digitalWrite(13, HIGH); }
-    b3_old = b3; b3 = digitalRead(10); if(b3-b3_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=2; orden = 300; totalMilliLitres=0; digitalWrite(13, HIGH); }
-    b4_old = b4; b4 = digitalRead(11); if(b4-b4_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=3; orden = 400; totalMilliLitres=0; digitalWrite(13, HIGH); }
-    b5_old = b5; b5 = digitalRead(12); if(b5-b5_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=4; orden = 500; totalMilliLitres=0; digitalWrite(13, HIGH); }
-    if (totalMilliLitres/4 > orden) {digitalWrite(13,LOW); }
+    b1_old = b1; b1 = digitalRead(8); if(b1-b1_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=0; orden = 300; totalMilliLitres=0; digitalWrite(13, LOW); }
+    b2_old = b2; b2 = digitalRead(9); if(b2-b2_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=1; orden = 490; totalMilliLitres=0; digitalWrite(13, LOW); }
+    b3_old = b3; b3 = digitalRead(10); if(b3-b3_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=2; orden = 490; totalMilliLitres=0; digitalWrite(13, LOW); }
+    b4_old = b4; b4 = digitalRead(11); if(b4-b4_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=3; orden = 490; totalMilliLitres=0; digitalWrite(13, LOW); }
+    b5_old = b5; b5 = digitalRead(12); if(b5-b5_old == -1) {Serial.println(mensaje1+mensaje2); delay(50);modo=4; orden = 40; totalMilliLitres=0; digitalWrite(13, LOW); }
+    if (totalMilliLitres/4 > orden) {digitalWrite(13,HIGH); }
 
 
    if((millis() - oldTime) > 400)    // Only process counters once per second
