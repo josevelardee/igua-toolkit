@@ -209,8 +209,8 @@ def envia(maquina, modo, volumen):
 	print('vamos ahorrando botellas: ' + str(int(cuentabotellas/650)))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	
-	fd = open('IGUA_SELVAMONOS.csv','a')
-	fd.write('timestamp:,' + str(timestamp) +',máquina:,' + str(maquina) + ',modo:,' + str(modo) + ',volumen:,' + str(volumen) )
+	fd = open('IGUA_SELVAMONOS_log.csv','a')
+	fd.write('timestamp:,' + str(timestamp) +',máquina:,' + str(maquina) + ',modo:,' + str(modo) + ',volumen:,' + str(volumen) + "\n")
 	fd.close()
 	'''
 	file = open('IGUA_SELVAMONOS.txt','w') 
@@ -220,13 +220,15 @@ def envia(maquina, modo, volumen):
 	
 	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": maquina, "modo_info":"m0: 300ml, m1: 500ml, m2: nuevoTT, m3: TTinfinito, m4: enjuague", "modo": modo, "servido litros": volumen} } 
 	print(data)
+	
+	'''
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
 		print('conexion ok!')
 		print(carriots_response.read())
 	else:
 		print('no connectivity available')
-		
+	'''	
 
 
 
