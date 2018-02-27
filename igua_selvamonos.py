@@ -1,4 +1,4 @@
-cuentabotellas = 0
+cuentabotellas = 298310
 
 #!/usr/bin/python3 import os
 
@@ -202,8 +202,11 @@ def envia(maquina, modo, volumen):
 	print('el volumen es (normal): ' + volumen)
 	print('el volumen es (string): ' + str(volumen))
 	
-	ser_counter.write(("~     " + str(int(cuentabotellas/650)).zfill(4) + "   ").encode('ascii'))  #  )
-
+	try: 
+		ser_counter.write(("~     " + str(int(cuentabotellas/650)).zfill(4) + "   ").encode('ascii'))  #  )
+	except: 
+		z = 0
+		print("serial error")
 	print('vamos sirviendo volumen: ' + volumen)
 	print('vamos sirviendo mililitros: ' + str(cuentabotellas))
 	print('vamos ahorrando botellas: ' + str(int(cuentabotellas/650)))
