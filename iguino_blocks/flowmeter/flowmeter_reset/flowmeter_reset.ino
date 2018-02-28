@@ -30,7 +30,7 @@ float flowRate;
 unsigned int flowMilliLitres;
 unsigned long totalMilliLitres;
 unsigned long oldTotalMillilitres;
-unsigned long before;
+
 
 unsigned long oldTime;
 
@@ -53,7 +53,7 @@ void setup()
   totalMilliLitres  = 0;
   oldTotalMillilitres = 0;
   oldTime           = 0;
-  before = millis();
+
 
   // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
   // Configured to trigger on a FALLING state change (transition from HIGH
@@ -67,7 +67,7 @@ void setup()
 void loop()
 {
    
-   if((millis() - oldTime) > 400)    // Only process counters once per second
+   if((millis() - oldTime) > 200)    // Only process counters once per second
   { 
     // Disable the interrupt while calculating flow rate and sending the value to
     // the host
@@ -113,27 +113,39 @@ void loop()
 
     // Print the cumulative total of litres flowed since starting
     // Serial.print("  Output Liquid Quantity: ");             // Output separator
-    Serial.println(totalMilliLitres);
-    if (Serial.available() > 0){
-     Serial.flush();
-     totalMilliLitres = 0;
-     oldTotalMillilitres = 0;
-     pulseCount        = 0;
-     totalMilliLitres  = 0;
-     oldTotalMillilitres = 0;
-     before = millis();
-    }
-    
-    /*
-    if (oldTotalMillilitres != totalMilliLitres)
+    // Serial.println(totalMilliLitres);
+    if (Serial.available() > 0)
+    {
+      int a = 0;
+      byte incomingByte = 0;
+      while (Serial.available() > 0)
       {
-      before = millis();
+      byte incomingByte = Serial.read();
+      a = a + 1;
+      } 
+     
+       //      Serial.print("llegaron: ");
+       //      Serial.println(a, DEC);
+       //      Serial.print("mililitros: "); 
+       //      Serial.println(totalMilliLitres);   
+
+      if (a > 4){
+       // Serial.println("reseteamos! con caracteres"); 
+       // Serial.println(a); 
+       totalMilliLitres = 0;
+       oldTotalMillilitres = 0;
+       pulseCount        = 0;
+       totalMilliLitres  = 0;
+       oldTotalMillilitres = 0;
       }
-    if ((millis() - before) > 43200000 ) //     12 horas sin uso?
-      {totalMilliLitres = 0;}
-      // Serial.println("mL");
-    */
- 
+       
+      if (a < 6){
+       // Serial.print("mililitros: ");  
+       Serial.println(totalMilliLitres);   
+      }
+    }
+       
+    
 
     // Reset the pulse counter so we can start incrementing again
     pulseCount = 0;

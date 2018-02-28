@@ -105,8 +105,8 @@ def is_connected():
 
 		
 # ser = serial.Serial('/dev/ttyACM1',9600,timeout = 0) #puerto del acceptor 
-ser_flw =  serial.Serial('/dev/ttyACM0',9600,timeout = None) #puerto del flujometro es ser_flw 
-ser_lcd =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS) # puerto de lcd es ser_lcd 
+ser_flw =  serial.Serial('/dev/ttyACM1',9600,timeout = None) #puerto del flujometro es ser_flw 
+ser_lcd =  serial.Serial('/dev/ttyACM0',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS) # puerto de lcd es ser_lcd 
 # ser_tds = serial.Serial('/dev/ttyACM1',9600,timeout = None) # puerto de tds es ser_tds
 # ser_psi = serial.Serial('/dev/ttyACM2',9600,timeout = None) # puerto de psi es ser_psi
 
@@ -306,7 +306,7 @@ def read_flw():
 	global string_flw
 	bytesToRead = ser_flw.inWaiting()
 	if bytesToRead > 0:
-		sleep(0.1)
+		sleep(0.05)
 		diff = 0
 		bytesToRead = ser_flw.inWaiting()
 		# print("bytes to read on ser_flw: ", bytesToRead)
@@ -350,22 +350,27 @@ sleep(2)
 while 1 == 1:
 		
 	# ser_flw.flushInput()
-	sleep(0.3)
+	sleep(0.5)
 		
 	servidos_total = int(string_flw)
+	
 	servidos_litros_older = servidos_lt_old
 	servidos_lt_old = servidos_lt
-	servidos_lt = 0.9 * ((servidos_total) * 2640)/(22*2000)
-
+	servidos_lt = ((servidos_total) * 25)/(10*20000)
+	print("servido litros: ", servidos_lt)
 	ahorradas_bot = servidos_lt / 0.75
 	# diff = 10 - diff
 	loopcounter = loopcounter + 1
 		
-	read_psi()
-	clean_string_psi()
-	update_globalvars_psi()
-	read_tds()
+	# read_psi()
+	# clean_string_psi()
+	# update_globalvars_psi()
+	# read_tds()
+	
+	ser_flw.write('a'.encode())
+	
 	read_flw()
+	
 	
 	if int(loopcounter/int(2))%3 == 0:
 		lcd_servidos_lt((servidos_lt),diff)
@@ -374,10 +379,12 @@ while 1 == 1:
 	if int(loopcounter/int(2))%3 == 2:
 		ser_lcd.write('mAs agua pura!'.encode())
 				
-	if (servidos_lt_old == servidos_lt) and (servidos_litros_older != servidos_lt_old):			
+	if (servidos_lt_old == servidos_lt) and (servidos_litros_older < servidos_lt_old):			
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
-		
-		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f'), "maquina": "2", "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_tds} }
+		#aquí le debemos mandar el resetter al arduino
+		ser_flw.write('aasdfasdf'.encode())
+		#sleep(3)
+		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt, '.3f'), "maquina": "2", "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_tds} }
 		print(data)
 		if is_connected() == True:
 			carriots_response = client_carriots.send(data)
@@ -385,3 +392,4 @@ while 1 == 1:
 			print(carriots_response.read())
 		else:
 			print('no connectivity available')
+		
