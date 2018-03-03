@@ -199,7 +199,7 @@ def lcd_acumula_pwyw(solesacumulados):
 def lcd_servidos_lt(servidos_lt,diff):
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ' + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!').encode())	
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ').encode())    # + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!'))	
-	ser_lcd.write(('  + ' + str(format(servidos_lt/1000, '.3f')) + ' litros! ').encode())	
+	ser_lcd.write(('  + ' + str(format(servidos_lt, '.3f')) + ' litros! ').encode())	
 
 def lcd_ahorradas_bot(ahorradas_bot,diff):
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ' + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!').encode())	
@@ -356,7 +356,7 @@ while 1 == 1:
 	
 	servidos_litros_older = servidos_lt_old
 	servidos_lt_old = servidos_lt
-	servidos_lt = ((servidos_total) * 25)/(10*20000)
+	servidos_lt = ((servidos_total) * 9.48 * 2.5 )/(10*20000* 0.865)
 	print("servido litros: ", servidos_lt)
 	ahorradas_bot = servidos_lt / 0.75
 	# diff = 10 - diff
