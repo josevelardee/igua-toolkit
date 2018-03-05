@@ -150,7 +150,7 @@ client_carriots = Client(apikey)
 
 
 #para lcd
-def lcd_bienvenida_linear(now):
+'''def lcd_bienvenida_linear(now):
 	if  now == 0:
 		ser_lcd.write('agua pura!      toma igua!!!    '.encode())
 	elif now == 1:
@@ -181,7 +181,8 @@ def lcd_bienvenida_pwyw(now):
 		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 	
 	return 1
-
+''' 
+'''
 def lcd_acumula_linear(solesacumulados):
 	# ser_lcd.write('hola mundo!!!      hola igua!!! '.encode())	
 	ser_lcd.write(('tu saldo: S/. ' + str(format(solesacumulados, '.2f'))).encode())
@@ -194,18 +195,23 @@ def lcd_acumula_pwyw(solesacumulados):
 	# msgSurfaceObj = fontObj.render('tu aporte: S/. ' + format(solesacumulados, '.2f'), False,whiteColor)
 	ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f'))).encode())	
 	# msgSurfaceObj2 = fontObj2.render('deposita mas o sirvete! ', False,whiteColor)	
-
+'''
 	
 def lcd_servidos_lt(servidos_lt,diff):
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ' + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!').encode())	
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ').encode())    # + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!'))	
-	ser_lcd.write(('  + ' + str(format(servidos_lt, '.3f')) + ' litros! ').encode())	
+	if ((servidos_lt * 1000) < 1000):
+		ser_lcd.write(('  + ' + str(format(servidos_lt*1000, '.0f')) + ' ml ! ').encode())	
+		#ser_lcd.write(('  + ' + str(format(servidos_lt, '.3f')) + ' litros! ').encode())	
+	else:
+		ser_lcd.write(('  + ' + str(format(servidos_lt, '.2f')) + ' litros ! ').encode())
+		
 
 def lcd_ahorradas_bot(ahorradas_bot,diff):
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ' + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!').encode())	
 	# ser_lcd.write(('mAs agua pura!  mAs agua pura!  ').encode())    # + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!'))	
 	ser_lcd.write(('  - ' + str(format(ahorradas_bot/1000, '.0f')) + ' botellas! ').encode())	
-	
+'''	
 		
 	# ser_lcd.write(('QWERTYUIASDFGHJKL').encode())    # + ' + ' + str(format(servidos_lt/1000, '.3f')) + ' litros!'))	
 	# msgSurfaceObj = fontObj.render('te quedan: ' + format(servidos_lt/1000, '.3f') + ' litros!', False,whiteColor)
@@ -261,7 +267,11 @@ def read_psi():
 		# print("bytes to read on ser_psi: ", bytesToRead)
 		string_psi = str(ser_psi.readline(),'utf-8')
 		# print("received on ser_psi: ", string_psi)
-		
+	
+def detectaUsb():
+	try ser_flw =  serial.Serial('/dev/ttyACM1',9600,timeout = None)
+	
+	 
 def clean_string_psi():
 		global string_psi	
 		global string_psi_array
@@ -300,6 +310,7 @@ def update_globalvars_psi():
 		string_psi_psi2 = string_psi_array[3]
 		string_psi_v3 = string_psi_array[4]
 		string_psi_psi3 = string_psi_array[5]
+'''
 						
 def read_flw():
 	global ser_flw
@@ -371,20 +382,29 @@ while 1 == 1:
 	
 	read_flw()
 	
-	
-	if int(loopcounter/int(2))%3 == 0:
+	if (servidos_lt_old < servidos_lt):
 		lcd_servidos_lt((servidos_lt),diff)
-	if int(loopcounter/int(2))%3 == 1:
-		lcd_ahorradas_bot(ahorradas_bot,diff)
-	if int(loopcounter/int(2))%3 == 2:
-		ser_lcd.write('mAs agua pura!'.encode())
+	else:
+		if int(loopcounter/int(2))%3 == 0:
+			ser_lcd.write(' toma IGUA   !!! '.encode())
+		if int(loopcounter/int(2))%3 == 1:
+			ser_lcd.write('mAs agua pura!   '.encode())	
+			#	if int(loopcounter/int(2))%3 == 1:
+			# 	lcd_ahorradas_bot(ahorradas_bot,diff) 
+		if int(loopcounter/int(2))%3 == 2:
+			ser_lcd.write(' ... sIrvete !!! '.encode())
 				
 	if (servidos_lt_old == servidos_lt) and (servidos_litros_older < servidos_lt_old):			
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		#aquí le debemos mandar el resetter al arduino
 		ser_flw.write('aasdfasdf'.encode())
 		#sleep(3)
-		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt, '.3f'), "maquina": "2", "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_tds} }
+		fd = open('IGUA_OFISELVA_log.csv','a')
+		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_ofiselva, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
+		fd.close()
+		data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "ofiselva", "servido litros": format(servidos_lt, '.3f') } }
+		# data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "ofiselva", '''"colectado soles": solesacumulados,'''"servido litros": format(servidos_lt, '.3f')''' "psi_1" : string_psi_psi1,  "psi_2" : string_psi_psi2,  "psi_3" : string_psi_psi3,"tds": string_tds'''} }
+		# data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": maquina, "modo_info":"m0: 300ml, m1: 500ml, m2: nuevoTT, m3: TTinfinito, m4: enjuague", "modo": modo, "servido litros": volumen} } 
 		print(data)
 		if is_connected() == True:
 			carriots_response = client_carriots.send(data)
