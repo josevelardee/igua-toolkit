@@ -38,6 +38,7 @@ GPIO.setwarnings(False)
 button = 4				# GPIO04, pin nro 07 
 valve_relay = 17		# GPIO17, pin nro 11   
 button2 = 27			# GPIO27, pin nro 13
+ozono = 24				# GPIO24, pin nro 18
 spritz_relay = 22		# GPIO22, pin nro 15
 coinhibitor_relay = 23	# GPIO23, pin nro 16
 UV_relay = 18			# GPIO18, pin nro 12
@@ -45,6 +46,7 @@ UV_relay = 18			# GPIO18, pin nro 12
 GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(button2, GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(valve_relay, GPIO.OUT)
+GPIO.setup(ozono, GPIO.OUT)
 GPIO.setup(spritz_relay, GPIO.OUT)
 GPIO.setup(coinhibitor_relay, GPIO.OUT)
 GPIO.setup(UV_relay, GPIO.OUT)
@@ -223,12 +225,13 @@ def lcd_servidos_lt(servidos_lt,diff):
 		ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())	
 	
 	
-def lcd_agradece():
-	ser_lcd.write('gracias!!!! igua ague pe ! '.encode())	
+def lcd_ozonizando():
+	ser_lcd.write('... ozonizando ...              '.encode())	
 
 def inicializaGPIO():
 	set_valve(0)
-	set_UV(1)	
+	set_UV(1)
+	set_ozono(0)	
 	
 def set_valve(valor):
 	if valor == 0:
@@ -237,6 +240,12 @@ def set_valve(valor):
 	if valor == 1:
 		GPIO.output(valve_relay, 0)
 		GPIO.output(spritz_relay, 1)
+		
+def set_ozono(valor):
+	if valor == 0:
+		GPIO.output(ozono, 0)
+	if valor == 1:
+		GPIO.output(ozono, 1)
 		
 def set_UV(valor):
 	if valor == 0:
@@ -484,11 +493,20 @@ while 1 == 1:
 			process_id = 1
 			# print ("button is NOT PRESSED")	
 		
+	elif process_id == 2:	
+		# enciende el pin de Ozono
+		set_ozono(1)
 		
-			
+		# muestra display "OZONIZANDO"
+		lcd_ozonizando()
+		# espera N segs
+		sleep(3)
+		set_ozono(0)
+		# apaga el pin de Ozono
+		process_id = 3
 	
 	# habilitada vavula y muestra litros
-	elif process_id == 2:
+	elif process_id == 3:
 		set_accepting(1)
 		print("estoy en el PID2")
 		# ser_flw.flushInput()
@@ -508,7 +526,7 @@ while 1 == 1:
 		if modo_maquina == 1:
 			litros_servir = 1000
 		
-		while process_id == 2:
+		while process_id == 3:
 
 			#verifica timeout
 			hora_actual = int(time.time())
@@ -543,18 +561,18 @@ while 1 == 1:
 				print ("se pasó del volumen a servir")
 				set_valve(0)
 				send_to_carriots()
-				process_id = 3
+				process_id = 4
 					
 			if tiempo_desde_inicio_servida > 10:     #si se demora mucho en re-servir		
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
 				send_to_carriots()
-				process_id = 3
+				process_id = 4
 				
 					
 
-	# deshabilita vavula y agradece
-	elif process_id == 3:
+	# deshabilita vavula y ozonizando
+	elif process_id == 4:
 		
 		sleep(0.5)
 		
@@ -567,11 +585,19 @@ while 1 == 1:
 		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_ofiselva, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
 		fd.close()
 		
-		display_agradece()
-		lcd_agradece()
+		set_ozono(1)
+		
+		# muestra display "OZONIZANDO"
+		lcd_ozonizando()
+		# espera N segs
+		sleep(3)
+		set_ozono(0)
+		
 		before = int(time.time()) 
 		# print("before: ", before)
-		while process_id==3:
+
+		
+		while process_id==4:
 			now = int(time.time())
 			# print("now: ", now)	
 			diff = now - before
@@ -579,6 +605,7 @@ while 1 == 1:
 			if diff > 3:
 				set_UV(1)
 				process_id = 0
+				#   apagar ozono
 	
 	
 
