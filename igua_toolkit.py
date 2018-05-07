@@ -474,13 +474,13 @@ while 1 == 1:
 
 		#tap_button pressed
 		button_state = GPIO.input(button)
-		if (button_state == GPIO.LOW) or (diff > 10):
+		if (button_state == GPIO.LOW) or (diff > 20):
 			diff = 0
 			print ("switching to PID2")
 			time.sleep(0.5)	
 			diff = 0
 			before = int(time.time())
-			process_id = 2	
+			process_id = 2
 			latch = 1
 			servidos_lt = 0
 			precio = 0.5
@@ -582,6 +582,7 @@ while 1 == 1:
 		#anexa al archivo en local
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		fd = open('IGUA_DANNY_log.csv','a')
+		# fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodega, volumen: ' + str(format(string_flw, '.3f')) + "\n")
 		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_ofiselva, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
 		fd.close()
 		
