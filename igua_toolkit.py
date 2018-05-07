@@ -104,9 +104,26 @@ def is_connected():
         pass
     return False
 
-ser = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
-ser2 =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
-ser3 =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS)
+ser_acc = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
+ser_flw =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
+ser_lcd =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS)
+
+
+def read_flw():
+	global ser_flw
+	global string_flw
+	bytesToRead = ser_flw.inWaiting()
+	if bytesToRead > 0:
+		sleep(0.05)
+		diff = 0
+		bytesToRead = ser_flw.inWaiting()
+		# print("bytes to read on ser_flw: ", bytesToRead)
+		string_flw = str(ser_flw.readline(),'utf-8')
+		# print("received on ser_flw: ", string_flw)
+		string_flw = string_flw.lstrip('r')
+		string_flw = string_flw.strip('\n\r')
+		string_flw = string_flw.strip('\r\n')
+		
 
 #modulos custom
 from igua_display import startdisplay, refreshdisplay 
@@ -160,54 +177,54 @@ client_carriots = Client(apikey)
 #para lcd
 def lcd_bienvenida_linear(now):
 	if  now == 0:
-		ser3.write('mAs agua pura...   para Todos!!!'.encode())
+		ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
 	elif now == 1:
-		ser3.write('cuida tu salud..y la del planeta'.encode())
+		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
 	elif now == 2:
-		ser3.write('mejor agua y... menos plAstico!!'.encode())
+		ser_lcd.write('mejor agua y... menos plAstico!!'.encode())
 	elif now == 3:
-		ser3.write('f/aguaigua      http://igua.pe  '.encode())
+		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
 	elif now == 4:
-		ser3.write('hola mundo!!!   hola igua!!!    '.encode())
+		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 	elif now == 5:
-		ser3.write('agua igua,      salud!          '.encode())
+		ser_lcd.write('agua igua,      salud!          '.encode())
 	
 	return 1
 
 def lcd_bienvenida_pwyw(now):
 	if  now == 0:
-		ser3.write('mAs agua pura...   para Todos!!!'.encode())
+		ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
 	elif now == 1:
-		ser3.write('cuida tu salud..y la del planeta'.encode())
+		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
 	elif now == 2:
-		ser3.write('mejor agua y... menos plAstico!!'.encode())
+		ser_lcd.write('mejor agua y... menos plAstico!!'.encode())
 	elif now == 3:
-		ser3.write('f/aguaigua      http://igua.pe  '.encode())
+		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
 	elif now == 4:
-		ser3.write('hola mundo!!!   hola igua!!!    '.encode())
+		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 	elif now == 5:
-		ser3.write('agua igua,      salud!          '.encode())
+		ser_lcd.write('agua igua,      salud!          '.encode())
 	
 	return 1
 
 def lcd_acumula_linear(solesacumulados):
-	ser3.write(('tu saldo: S/. ' + str(format(solesacumulados, '.2f'))).encode())
+	ser_lcd.write(('tu saldo: S/. ' + str(format(solesacumulados, '.2f'))).encode())
 	return 1
 	
 def lcd_acumula_pwyw(solesacumulados):
-	ser3.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f'))).encode())	
+	ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f'))).encode())	
 		
 def lcd_servidos_lt(servidos_lt,diff):
 	global button
 	button_state = GPIO.input(button)
 	if button_state == GPIO.LOW:
-		ser3.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())	
+		ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())	
 	if button_state == GPIO.HIGH:
-		ser3.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())	
+		ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())	
 	
 	
 def lcd_agradece():
-	ser3.write('gracias!!!! igua ague pe ! '.encode())	
+	ser_lcd.write('gracias!!!! igua ague pe ! '.encode())	
 
 def inicializaGPIO():
 	set_valve(0)
@@ -232,8 +249,98 @@ def set_accepting(valor):
 		GPIO.output(coinhibitor_relay, 1)
 	if valor == 1:
 		GPIO.output(coinhibitor_relay, 0)
-	
+
+'''
+def read_tds():
+	global string_tds
+	global ser_tds
+	bytesToRead = ser_tds.inWaiting()
+	if bytesToRead > 0:
+		sleep(0.1)
+		bytesToRead = ser_tds.inWaiting()
+		print("bytes to read on ser_tds: ", bytesToRead)
+		string_tds = str(ser_tds.readline(),'utf-8')
+		print("received on ser_tds: ", string_tds)
+		string_tds = string_tds.lstrip('r')
+		string_tds = string_tds.strip('\n\r')
+		string_tds = string_tds.strip('\r\n')		
+
+def read_psi():
+	global last_string_psi_1
+	global last_string_psi_2
+	global last_string_psi_3
+	global last_string_psi_4
+	global last_string_psi_5
+	global last_string_psi_6
+	global last_string_psi_7
+	global last_string_psi_8
+	global last_string_psi_9
+	global last_string_psi_10
+	global string_psi
+	global ser_psi
 		
+	bytesToRead = ser_psi.inWaiting()
+	if bytesToRead > 0:
+		last_string_psi_10 = last_string_psi_9
+		last_string_psi_9 = last_string_psi_8
+		last_string_psi_8 = last_string_psi_7
+		last_string_psi_7 = last_string_psi_6
+		last_string_psi_6 = last_string_psi_5
+		last_string_psi_5 = last_string_psi_4
+		last_string_psi_4 = last_string_psi_3
+		last_string_psi_3 = last_string_psi_2
+		last_string_psi_2 = last_string_psi_1
+		last_string_psi_1 = string_psi
+		sleep(0.5)
+		bytesToRead = ser_psi.inWaiting()
+		# print("bytes to read on ser_psi: ", bytesToRead)
+		string_psi = str(ser_psi.readline(),'utf-8')
+		# print("received on ser_psi: ", string_psi)
+	
+def detectaUsb():
+	try ser_flw =  serial.Serial('/dev/ttyACM1',9600,timeout = None)
+	
+	 
+def clean_string_psi():
+		global string_psi	
+		global string_psi_array
+        # Entrada: 0.93 Voltios - Presion = 19.49 psi // Carbon: 0.95 Voltios - Presion = 18.12 psi // UF: 0.91 Voltios - Presion = 18.94 psi // 
+
+		string_psi = string_psi.lstrip('r')
+		string_psi = string_psi.strip('\n\r')
+		string_psi = string_psi.strip('\r\n')
+		string_psi = string_psi.lstrip('Entrada: ')
+		string_psi = string_psi.replace(' Voltios - Presion = ', ' ')
+		string_psi = string_psi.replace(' psi // Carbon: ', ' ')
+		string_psi = string_psi.replace(' Voltios - Presion = ', ' ')
+		string_psi = string_psi.replace(' psi // UF: ', ' ')
+		string_psi = string_psi.replace(' Voltios - Presion = ',' ')
+		string_psi = string_psi.replace(' psi // ', ' ')
+		string_psi_array = string_psi.split(' ')
+		
+		
+def update_globalvars_psi():		
+		global string_psi_v1
+		global string_psi_psi1
+		global string_psi_v2
+		global string_psi_psi2
+		global string_psi_v3
+		global string_psi_psi3
+		global string_psi_array
+		# print('voltaje 1: ', string_psi_array[0])
+		# print('presion 1: ', string_psi_array[1])
+		# print('voltaje 2: ', string_psi_array[2])
+		# print('presion 2: ', string_psi_array[3])
+		# print('voltaje 3: ', string_psi_array[4])
+		# print('presion 3: ', string_psi_array[5])
+		string_psi_v1 = string_psi_array[0]
+		string_psi_psi1 = string_psi_array[1]
+		string_psi_v2 = string_psi_array[2]
+		string_psi_psi2 = string_psi_array[3]
+		string_psi_v3 = string_psi_array[4]
+		string_psi_psi3 = string_psi_array[5]
+		'''
+				
 def send_to_carriots():  #send collected data to carriots
 	global device
 	global servidolitros
@@ -250,6 +357,52 @@ def send_to_carriots():  #send collected data to carriots
 	else:
 		print('no connectivity available')
 		
+def read_flw():
+	global ser_flw
+	global string_flw
+	bytesToRead = ser_flw.inWaiting()
+	if bytesToRead > 0:
+		sleep(0.05)
+		diff = 0
+		bytesToRead = ser_flw.inWaiting()
+		# print("bytes to read on ser_flw: ", bytesToRead)
+		string_flw = str(ser_flw.readline(),'utf-8')
+		# print("received on ser_flw: ", string_flw)
+		string_flw = string_flw.lstrip('r')
+		string_flw = string_flw.strip('\n\r')
+		string_flw = string_flw.strip('\r\n')
+		
+
+#globals		
+servidos_lt = 0
+servidos_lt_old = 0
+servidos_litros_older = 0
+loopcounter = 0	
+servidos_total_old = 0
+
+# last_string_psi_10 = "default string"
+# last_string_psi_9 = "default string"
+# last_string_psi_8 = "default string"
+# last_string_psi_7 = "default string"
+# last_string_psi_6 = "default string"
+# last_string_psi_5 = "default string"
+# last_string_psi_4 = "default string"
+# last_string_psi_3 = "default string"
+# last_string_psi_2 = "default string"
+# last_string_psi_1 = "default string"
+# string_tds = "default string"
+# string_psi = "default string"
+string_flw = "0"
+diff = 0
+# string_psi_array = ["0", "0",  "0",  "0", "0", "0"]
+# string_psi_v1 = 0
+# string_psi_psi1 = 0
+# string_psi_v2 = 0
+# string_psi_psi2 = 0
+# string_psi_v3 = 0 
+# string_psi_psi3 = 0
+
+sleep(2)
 		
 inicializaGPIO()
 
@@ -273,7 +426,7 @@ while 1 == 1:
     #leer aceptador de monedas
 		before = int(time.time())
 		
-		bytesToRead = ser.inWaiting()
+		bytesToRead = ser_acc.inWaiting()
 		if bytesToRead > 0:
 			now = int(time.time())
 			process_id = 1
@@ -283,13 +436,13 @@ while 1 == 1:
 		set_UV(0)
 		set_accepting(0)
 		secondcycle = 0   #variable que inicializa el pid2
-		bytesToRead = ser.inWaiting()
+		bytesToRead = ser_acc.inWaiting()
 		if bytesToRead > 0:
 			sleep(0.5)
-			bytesToRead = ser.inWaiting()
+			bytesToRead = ser_acc.inWaiting()
 			# print("bytes to read: ", bytesToRead)
-			# string_igua = str(ser.readline(),'utf-8')
-			string_igua = ser.read(2)		
+			# string_igua = str(ser_acc.readline(),'utf-8')
+			string_igua = ser_acc.read(2)		
 			ferros = int(string_igua)
 			ferrosacumulados = ferrosacumulados + ferros
 			solesacumulados = ferrosacumulados / 10.0
@@ -338,11 +491,17 @@ while 1 == 1:
 	elif process_id == 2:
 		set_accepting(1)
 		print("estoy en el PID2")
-		ser2.flushInput()
+		# ser_flw.flushInput()
+		# read_psi()
+		# clean_string_psi()
+		# update_globalvars_psi()
+		# read_tds()
+		ser_flw.write('a'.encode())
 		sleep(0.1)
+		read_flw()
 		hora_actual = int(time.time())
 		hora_de_re_inicio_servida = hora_actual
-		ser2.flushInput()
+
 						
 		if modo_maquina == 0:
 			litros_servir = 1000 * (solesacumulados / precio) 
@@ -355,45 +514,15 @@ while 1 == 1:
 			hora_actual = int(time.time())
 			tiempo_desde_inicio_servida = hora_actual - hora_de_re_inicio_servida
 			
-			bytesToRead = ser2.inWaiting()
-			# ser2.flushInput()
-			# delay(0.5)
-			if bytesToRead > 64:  #cada vez que recibe la cuenta desde arduino-flujometro
-				ser2.flushInput()
-				print('(hemos quemado bytes retrasantes) ')
-				
-			if bytesToRead > 0:  #cada vez que recibe la cuenta desde arduino-flujometro
-				sleep(0.05)     #esperamos a que llegue todo el mensaje 
-				print("ahora voy a leer e imprimir lo que recibo.... ")
-				try:
-					string_igua = str(ser2.readline(),'utf-8')
-				except ValueError:
-					print('utf error')
-				string_igua = str(string_igua).lstrip('r')
-				string_igua = str(string_igua).strip('\n\r')
-				string_igua = str(string_igua).strip('\r\n')
-				print('entonces el valor sería: ')
-				print(string_igua)
-				
-				if secondcycle == 0:
-						try:
-							counter_al_inicio = int(string_igua)
-						except ValueError:
-							print('value error')
-							
-				secondcycle = 1  #flag que indica que ya se corrio una vuelta de inicializon			
-				try:
-					servidos_total = int(string_igua)
-					print('recibido ok "int" ')
-					
-				except ValueError:
-					print('no se recibió "int" ')
-			
-			if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
-				servidos_lt = 0.9 * (7/8) * (50/300)* ((servidos_total - counter_al_inicio) * 2640)/1500
-				display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
-				lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
-				sleep(0.05)
+			ser_flw.write('a'.encode())
+			sleep(0.1)
+			read_flw()
+
+			# se podrìa borrar?   if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
+			servidos_lt = float(int(string_flw)/10)*0.95
+			display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
+			lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
+			sleep(0.05)
 				
 				# print("mande el comando al display")
 				
@@ -428,6 +557,16 @@ while 1 == 1:
 	elif process_id == 3:
 		
 		sleep(0.5)
+		
+		#resetea el flujometro
+		ser_flw.write('aasdfasdf'.encode())
+		
+		#anexa al archivo en local
+		timestamp = int(mktime(datetime.utcnow().timetuple()))
+		fd = open('IGUA_DANNY_log.csv','a')
+		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_ofiselva, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
+		fd.close()
+		
 		display_agradece()
 		lcd_agradece()
 		before = int(time.time()) 
