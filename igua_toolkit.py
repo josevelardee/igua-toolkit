@@ -412,8 +412,9 @@ diff = 0
 # string_psi_psi3 = 0
 
 sleep(2)
-		
+hora_de_ultimo_ozono = time.time()		
 inicializaGPIO()
+
 
 #MAIN LOOP	
 while 1 == 1:
@@ -431,6 +432,17 @@ while 1 == 1:
 			if modo_maquina == 1:
 				display_bienvenida_pwyw(now)
 				lcd_bienvenida_pwyw(now)  # cuidado CUIDADO!!!!
+				
+		ahora = time.time()
+		if (ahora - hora_de_ultimo_ozono > 1000)
+			set_ozono(0)
+			sleep(10)
+			set_ozono(1)
+			hora_de_ultimo_ozono = time.time()
+			
+		
+			
+		
 	
     #leer aceptador de monedas
 		before = int(time.time())
