@@ -603,7 +603,7 @@ while 1 == 1:
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		fd = open('IGUA_DANNY_log.csv','a')
 		# fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodega, volumen: ' + str(format(string_flw, '.3f')) + "\n")
-		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_ofiselva, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
+		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodegadanny, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
 		fd.close()
 		
 		# set_ozono(1)		
