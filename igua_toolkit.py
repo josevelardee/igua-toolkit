@@ -592,6 +592,7 @@ while 1 == 1:
 
 	# deshabilita vavula y ozonizando
 	elif process_id == 4:
+		lcd_agradece()
 		
 		sleep(0.5)
 		
@@ -608,7 +609,6 @@ while 1 == 1:
 		# set_ozono(1)		
 		# muestra display "OZONIZANDO"
 		# lcd_ozonizando()
-		lcd_agradece()
 		# espera N segs
 		# sleep(10)
 		# set_ozono(0)
