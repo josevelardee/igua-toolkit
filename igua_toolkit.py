@@ -228,6 +228,9 @@ def lcd_servidos_lt(servidos_lt,diff):
 def lcd_ozonizando():
 	ser_lcd.write('... ozonizando ...              '.encode())	
 
+def lcd_agradece():
+	ser_lcd.write('... gracias !!!                 '.encode())	
+
 def inicializaGPIO():
 	set_valve(0)
 	set_UV(1)
@@ -243,9 +246,9 @@ def set_valve(valor):
 		
 def set_ozono(valor):
 	if valor == 0:
-		GPIO.output(ozono, 0)
-	if valor == 1:
 		GPIO.output(ozono, 1)
+	if valor == 1:
+		GPIO.output(ozono, 0)
 		
 def set_UV(valor):
 	if valor == 0:
@@ -434,10 +437,14 @@ while 1 == 1:
 				lcd_bienvenida_pwyw(now)  # cuidado CUIDADO!!!!
 				
 		ahora = time.time()
-		if (ahora - hora_de_ultimo_ozono > 1000)
-			set_ozono(0)
-			sleep(10)
+		print(ahora - hora_de_ultimo_ozono)
+		if (ahora - hora_de_ultimo_ozono) > 600:
 			set_ozono(1)
+			set_accepting(1) #deja de aceptar
+			lcd_ozonizando()
+			sleep(12)
+			set_ozono(0)
+			set_accepting(0) #vuelve a aceptar
 			hora_de_ultimo_ozono = time.time()
 			
 		
@@ -512,7 +519,7 @@ while 1 == 1:
 		# muestra display "OZONIZANDO"
 		lcd_ozonizando()
 		# espera N segs
-		sleep(3)
+		sleep(2.5)
 		set_ozono(0)
 		# apaga el pin de Ozono
 		process_id = 3
@@ -598,13 +605,13 @@ while 1 == 1:
 		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_ofiselva, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
 		fd.close()
 		
-		set_ozono(1)
-		
+		# set_ozono(1)		
 		# muestra display "OZONIZANDO"
-		lcd_ozonizando()
+		# lcd_ozonizando()
+		lcd_agradece()
 		# espera N segs
-		sleep(3)
-		set_ozono(0)
+		# sleep(10)
+		# set_ozono(0)
 		
 		before = int(time.time()) 
 		# print("before: ", before)
