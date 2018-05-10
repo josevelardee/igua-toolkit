@@ -438,12 +438,11 @@ while 1 == 1:
 				
 		ahora = time.time()
 		print(ahora - hora_de_ultimo_ozono)
-		if (ahora - hora_de_ultimo_ozono) > 1200:  #cada 20 minutos
+		if (ahora - hora_de_ultimo_ozono) > 600:
 			set_ozono(1)
 			set_accepting(1) #deja de aceptar
-			sleep(0.3)
 			lcd_ozonizando()
-			sleep(6)
+			sleep(12)
 			set_ozono(0)
 			set_accepting(0) #vuelve a aceptar
 			hora_de_ultimo_ozono = time.time()
@@ -515,12 +514,12 @@ while 1 == 1:
 		
 	elif process_id == 2:	
 		# enciende el pin de Ozono
-		set_ozono(0)
+		set_ozono(1)
 		
 		# muestra display "OZONIZANDO"
-		# lcd_ozonizando()
+		lcd_ozonizando()
 		# espera N segs
-		sleep(0.1)
+		sleep(2.5)
 		set_ozono(0)
 		# apaga el pin de Ozono
 		process_id = 3

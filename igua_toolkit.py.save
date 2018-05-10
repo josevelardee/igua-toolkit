@@ -128,10 +128,10 @@ def read_flw():
 		
 
 #modulos custom
-from igua_display import startdisplay, refreshdisplay 
-from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
-from igua_display import display_acumula_pwyw, display_acumula_linear
-from igua_display import display_servidos_lt, display_agradece 
+# from igua_display import startdisplay, refreshdisplay 
+# from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
+# from igua_display import display_acumula_pwyw, display_acumula_linear
+# from igua_display import display_servidos_lt, display_agradece 
 
 # import flowmeter
 # import valve
@@ -153,7 +153,7 @@ now = 0
 now_1 = 0
 
 #setup
-startdisplay()
+# startdisplay()     para display HDMI
 		
 #main loop
 
@@ -438,12 +438,11 @@ while 1 == 1:
 				
 		ahora = time.time()
 		print(ahora - hora_de_ultimo_ozono)
-		if (ahora - hora_de_ultimo_ozono) > 1200:  #cada 20 minutos
+		if (ahora - hora_de_ultimo_ozono) > 600:
 			set_ozono(1)
 			set_accepting(1) #deja de aceptar
-			sleep(0.3)
 			lcd_ozonizando()
-			sleep(6)
+			sleep(12)
 			set_ozono(0)
 			set_accepting(0) #vuelve a aceptar
 			hora_de_ultimo_ozono = time.time()
@@ -478,10 +477,10 @@ while 1 == 1:
 			before = int(time.time()) 
 			
 			if modo_maquina == 0:
-				display_acumula_linear(solesacumulados)
+				# display_acumula_linear(solesacumulados)
 				lcd_acumula_linear(solesacumulados)
 			if modo_maquina == 1:
-				display_acumula_pwyw(solesacumulados)
+				# display_acumula_pwyw(solesacumulados)
 				lcd_acumula_pwyw(solesacumulados)
 		
 		
@@ -515,12 +514,12 @@ while 1 == 1:
 		
 	elif process_id == 2:	
 		# enciende el pin de Ozono
-		set_ozono(0)
+		set_ozono(1)
 		
 		# muestra display "OZONIZANDO"
-		# lcd_ozonizando()
+		lcd_ozonizando()
 		# espera N segs
-		sleep(0.1)
+		sleep(2.5)
 		set_ozono(0)
 		# apaga el pin de Ozono
 		process_id = 3
