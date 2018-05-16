@@ -437,16 +437,18 @@ while 1 == 1:
 				lcd_bienvenida_pwyw(now)  # cuidado CUIDADO!!!!
 				
 		ahora = time.time()
-		print(ahora - hora_de_ultimo_ozono)
-		if (ahora - hora_de_ultimo_ozono) > 1200:  #cada 20 minutos
-			set_ozono(1)
-			set_accepting(1) #deja de aceptar
-			sleep(0.3)
-			lcd_ozonizando()
-			sleep(6)
-			set_ozono(0)
-			set_accepting(0) #vuelve a aceptar
+		# print(ahora - hora_de_ultimo_ozono)
+		if (ahora - hora_de_ultimo_ozono) > 10:  #cada 20 minutos
+			# set_ozono(1)
+			# set_accepting(1) #deja de aceptar
+			# sleep(0.3)
+			# lcd_ozonizando()
+			# sleep(6)
+			# set_ozono(0)
+			# set_accepting(0) #vuelve a aceptar
 			hora_de_ultimo_ozono = time.time()
+			print("pasaron 2 minutos")
+
 			
 		
 			
