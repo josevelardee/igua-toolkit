@@ -59,7 +59,7 @@ from json import dumps
 
 class Client (object):
     api_url = "http://api.carriots.com/streams"
-    api_read_url = "http://api.carriots.com/streams/IGUA01@kikomayorga.kikomayorga/"
+    api_read_url = "http://api.carriots.com/streams/IGUA@igua.devs.igua.devs"
 
     def __init__(self, api_key=None, client_type='json'):
         self.client_type = client_type
@@ -158,14 +158,14 @@ startdisplay()
 #main loop
 
 #para carriots
-device = "IGUA01@kikomayorga.kikomayorga"  # Replace with the id_developer of your device
+device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device
 # device = "IGUA_FEST_1@kikomayorga.kikomayorga"
 # device = "IGUA_FEST_1@kikomayorga.kikomayorga"
 # device = "IGUA_FEST_1@kikomayorga.kikomayorga"
 # device = "IGUA_FEST_1@kikomayorga.kikomayorga"
 # device = "IGUA_FEST_CHANCHA@kikomayorga.kikomayorga"
 # device = "IGUA_FEST_DMD@kikomayorga.kikomayorga"  
-apikey = "13f622d642b12cc336fa6bfde36e1561c6ac7eea19bd88d7c32246d0fca45691"  # Replace with your Carriots apikey
+apikey = "8971eb3a06dd2d55a7794f6c5c0067cbd8d349a04fd67fc611dc0dec552c41ce"  # Replace with your Carriots apikey
 client_carriots = Client(apikey)
 
 # ejemplo de curl "para traer todos los ulktimos streams"
@@ -183,13 +183,13 @@ def lcd_bienvenida_linear(now):
 	elif now == 1:
 		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
 	elif now == 2:
-		ser_lcd.write('mejor agua y... menos plAstico!!'.encode())
+		ser_lcd.write('y la del planetamenos plAstico!!'.encode())
 	elif now == 3:
 		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
 	elif now == 4:
 		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 	elif now == 5:
-		ser_lcd.write('agua igua,      salud!          '.encode())
+		ser_lcd.write('hola igua!!!    salud!          '.encode())
 	
 	return 1
 
@@ -199,7 +199,7 @@ def lcd_bienvenida_pwyw(now):
 	elif now == 1:
 		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
 	elif now == 2:
-		ser_lcd.write('mejor agua y... menos plAstico!!'.encode())
+		ser_lcd.write('y la del planeta                '.encode())
 	elif now == 3:
 		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
 	elif now == 4:
@@ -210,7 +210,7 @@ def lcd_bienvenida_pwyw(now):
 	return 1
 
 def lcd_acumula_linear(solesacumulados):
-	ser_lcd.write(('tu saldo: S/. ' + str(format(solesacumulados, '.2f'))).encode())
+	ser_lcd.write(('saldo: S/ ' + str(format(solesacumulados, '.2f'))).encode())
 	return 1
 	
 def lcd_acumula_pwyw(solesacumulados):
@@ -360,7 +360,7 @@ def send_to_carriots():  #send collected data to carriots
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(solesacumulados)
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f')}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f')}}
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
