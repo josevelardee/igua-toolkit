@@ -61,6 +61,12 @@ void loop() {
     // clear the screen
     lcd.clear();
     // read all the available characters
+    lcd.setCursor(0, 0);
+    while (Serial.available() > 16) {
+      // display each character to the LCD
+      lcd.write(Serial.read());
+      }
+    lcd.setCursor(0, 1);  
     while (Serial.available() > 0) {
       // display each character to the LCD
       lcd.write(Serial.read());

@@ -183,13 +183,13 @@ def lcd_bienvenida_linear(now):
 	elif now == 1:
 		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
 	elif now == 2:
-		ser_lcd.write('y la del planetamenos plAstico!!'.encode())
+		ser_lcd.write('juntos venceremos al plAstico!! '.encode())
 	elif now == 3:
 		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
 	elif now == 4:
 		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 	elif now == 5:
-		ser_lcd.write('hola igua!!!    salud!          '.encode())
+		ser_lcd.write('agua igua!!!           salud!   '.encode())
 	
 	return 1
 
@@ -355,12 +355,12 @@ def update_globalvars_psi():
 				
 def send_to_carriots():  #send collected data to carriots
 	global device
-	global servidolitros
+	global servidos_lt
 	global solesacumulados
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(solesacumulados)
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesacumulados, "servido litros": format(servidos_lt/1000, '.3f')}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
@@ -427,7 +427,7 @@ while 1 == 1:
 		ferrosacumulados = 0
 		now_1 = now
 		now = time.time()
-		now = int((now/2)%6)
+		now = int((now/2)%10)
 		if now != now_1:
 			if modo_maquina == 0:
 				display_bienvenida_linear(now)
@@ -447,7 +447,8 @@ while 1 == 1:
 			# set_ozono(0)
 			# set_accepting(0) #vuelve a aceptar
 			hora_de_ultimo_ozono = time.time()
-			print("pasaron 2 minutos")
+			print('estamos listos!')
+
 
 			
 		
@@ -491,14 +492,14 @@ while 1 == 1:
 		#TIMEOUT 
 		now = int(time.time())
 		diff = now - before
-		print("diff vale:", cuenta_de_ciclos)
+		#print("diff vale:", cuenta_de_ciclos)
 
 
-		#tap_button pressed
+		#tap_button pressed?
 		button_state = GPIO.input(button)
-		if (button_state == GPIO.LOW) or (diff > 20):
+		if (button_state == GPIO.LOW) or (diff > 200):
 			diff = 0
-			print ("switching to PID2")
+			#print ("switching to PID2")
 			time.sleep(0.5)	
 			diff = 0
 			before = int(time.time())
@@ -509,7 +510,6 @@ while 1 == 1:
 			servidos_total = 0
 			counter_al_inicio = 0		           
 			secondcycle = 0
-			
 			process_id = 2
 		else:
 			process_id = 1
