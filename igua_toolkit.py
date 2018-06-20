@@ -20,6 +20,32 @@
 # usando el Nexxt, la ip de la maquina suele ser:
 # 192.168.0.100
 
+#modulos custom
+from igua_display import startdisplay, refreshdisplay 
+from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
+from igua_display import display_acumula_pwyw, display_acumula_linear
+from igua_display import display_servidos_lt, display_agradece 
+
+
+#from display + coinacceptor
+
+last = 0.0
+running = 1
+
+
+solesacumulados = 0   			#transaction-wise accumulator
+ferrosacumulados = 0  			#transaction-wise accumulator
+cuenta_de_ciclos = 0				#transactions counter on eeprom	
+
+process_id = 0                  #
+modo_maquina = 0  # 1: pay what you want , 0: linear mode
+button_state = 0
+now = 0
+now_1 = 0
+
+#globales del keypad
+keypadcredit = float(0.0)
+cancelrequest_timeout = 0
 
 #importando modulos genericos
 from time import sleep
@@ -28,7 +54,77 @@ import time
 import serial
 import re
 import socket
+import threading
+
 REMOTE_SERVER = "www.google.com"
+
+# ///////////////////////////////////////////////////////////////
+# para threading
+class myThread (threading.Thread):
+   def __init__(self, threadID, name, counter):
+      threading.Thread.__init__(self)
+      self.threadID = threadID
+      self.name = name
+      self.counter = counter
+   def run(self):
+      print ("Starting " + self.name)
+      # Get lock to synchronize threads
+      threadLock.acquire()
+      keyboardpoller()
+      # Free lock to release next thread
+      threadLock.release()
+
+def keyboardpoller():
+	global keypadcredit
+	global process_id
+	global cancelrequest_timeout
+	while 1==1:
+		print ("Hola! Soy el 2do thread!")
+		
+		if process_id == 0:
+			plata = input("esperando teclas..... ")
+			print ("se ingreso por teclado: " + plata)
+			try: 
+				keypadcredit = float(plata)
+				if keypadcredit > 2.00:
+					keypadcredit = 0.0
+			except:
+				pass
+		
+		if process_id == 3:
+			plata = input("keypad podria cancalar..... ")
+			print ("se ingreso por teclado: " + plata)
+			try: 
+				keypadcredit = 0.0
+				process_id = 4
+				cancelrequest_timeout = 1
+			except:
+				pass
+		
+   
+
+threadLock = threading.Lock()
+threads = []
+
+# Create new threads
+thread1 = myThread(1, "keylistener", 1)
+# thread2 = myThread(2, "Thread-2", 2)
+
+# Start new Threads
+thread1.start()
+# thread2.start()
+
+# Add threads to thread list
+threads.append(thread1)
+# threads.append(thread2)
+
+# Wait for all threads to complete
+# for t in threads:
+#   t.join()
+# print ("Exiting Main Thread")
+# fin threading
+# ///////////////////////////////////////////////////////////////
+
 
 # configuaracion de entradas/saldas del RPI
 import RPi.GPIO as GPIO
@@ -127,30 +223,7 @@ def read_flw():
 		string_flw = string_flw.strip('\r\n')
 		
 
-#modulos custom
-from igua_display import startdisplay, refreshdisplay 
-from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
-from igua_display import display_acumula_pwyw, display_acumula_linear
-from igua_display import display_servidos_lt, display_agradece 
 
-# import flowmeter
-# import valve
-
-#from display + coinacceptor
-
-last = 0.0
-running = 1
-
-
-solesacumulados = 0   			#transaction-wise accumulator
-ferrosacumulados = 0  			#transaction-wise accumulator
-cuenta_de_ciclos = 0				#transactions counter on eeprom	
-
-process_id = 0                  #
-modo_maquina = 0  # 1: pay what you want , 0: linear mode
-button_state = 0
-now = 0
-now_1 = 0
 
 #setup
 startdisplay()
@@ -183,7 +256,7 @@ def lcd_bienvenida_linear(now):
 	elif now == 1:
 		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
 	elif now == 2:
-		ser_lcd.write('juntos venceremos al plAstico!! '.encode())
+		ser_lcd.write('juntos contra      el plAstico!!'.encode())
 	elif now == 3:
 		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
 	elif now == 4:
@@ -227,6 +300,9 @@ def lcd_servidos_lt(servidos_lt,diff):
 	
 def lcd_ozonizando():
 	ser_lcd.write('... ozonizando ...              '.encode())	
+	
+def lcd_cancelando():
+	ser_lcd.write('... CANCELANDO ...              '.encode())	
 
 def lcd_agradece():
 	ser_lcd.write('... gracias !!!                 '.encode())	
@@ -359,8 +435,10 @@ def send_to_carriots():  #send collected data to carriots
 	global solesacumulados
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
-	solesstring = str(solesacumulados)
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
+	solesstring = str(format(solesacumulados*100, ".0f"))
+	mlservidosstring = str(format(servidos_lt, ".0f"))
+	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
@@ -391,6 +469,7 @@ servidos_lt_old = 0
 servidos_litros_older = 0
 loopcounter = 0	
 servidos_total_old = 0
+precio = 0.5
 
 # last_string_psi_10 = "default string"
 # last_string_psi_9 = "default string"
@@ -430,7 +509,7 @@ while 1 == 1:
 		now = int((now/2)%10)
 		if now != now_1:
 			if modo_maquina == 0:
-				display_bienvenida_linear(now)
+				# display_bienvenida_linear(now)
 				lcd_bienvenida_linear(now)
 			if modo_maquina == 1:
 				display_bienvenida_pwyw(now)
@@ -462,6 +541,20 @@ while 1 == 1:
 		if bytesToRead > 0:
 			now = int(time.time())
 			process_id = 1
+			
+		if keypadcredit > 0.0:
+			solesacumulados = keypadcredit
+			before = int(time.time())  #se necesita esto?
+			
+			if modo_maquina == 0:
+				display_acumula_linear(solesacumulados)
+				lcd_acumula_linear(solesacumulados)
+			if modo_maquina == 1:
+				display_acumula_pwyw(solesacumulados)
+				lcd_acumula_pwyw(solesacumulados)
+			print("nosvamosalpid2")
+			process_id = 2;
+			
 			
 	#aceptando monedas
 	elif process_id == 1:
@@ -506,7 +599,7 @@ while 1 == 1:
 			process_id = 2
 			latch = 1
 			servidos_lt = 0
-			precio = 0.5
+			
 			servidos_total = 0
 			counter_al_inicio = 0		           
 			secondcycle = 0
@@ -530,7 +623,7 @@ while 1 == 1:
 	# habilitada vavula y muestra litros
 	elif process_id == 3:
 		set_accepting(1)
-		print("estoy en el PID2")
+		print("estoy en el PID3")
 		# ser_flw.flushInput()
 		# read_psi()
 		# clean_string_psi()
@@ -560,8 +653,8 @@ while 1 == 1:
 
 			# se podrìa borrar?   if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
 			servidos_lt = float(int(string_flw)/10)*0.95
-			display_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
-			lcd_servidos_lt((litros_servir - servidos_lt),10 - tiempo_desde_inicio_servida)
+			display_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
+			lcd_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
 			sleep(0.05)
 				
 				# print("mande el comando al display")
@@ -583,19 +676,31 @@ while 1 == 1:
 				print ("se pasó del volumen a servir")
 				set_valve(0)
 				send_to_carriots()
+				lcd_agradece()
 				process_id = 4
 					
-			if tiempo_desde_inicio_servida > 10:     #si se demora mucho en re-servir		
+			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en re-servir		
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
 				send_to_carriots()
+				lcd_agradece()
 				process_id = 4
+				
+			if cancelrequest_timeout == 1:
+				print ("se cancelo el tiempo de espera")
+				set_valve(0)   #cerrando la valvula
+				# send_to_carriots()
+				cancelrequest_timeout = 0
+				lcd_cancelando()
+				process_id = 4
+				
 				
 					
 
 	# deshabilita vavula y ozonizando
 	elif process_id == 4:
-		lcd_agradece()
+
+		keypadcredit = 0
 		
 		sleep(0.5)
 		
@@ -625,7 +730,7 @@ while 1 == 1:
 			# print("now: ", now)	
 			diff = now - before
 			# print("diff: ", diff)
-			if diff > 3:
+			if diff > 1:
 				set_UV(1)
 				process_id = 0
 				#   apagar ozono
