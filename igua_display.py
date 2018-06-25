@@ -24,20 +24,19 @@ def display_bienvenida_linear(now):
 	pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,width,height))
 	# pygame.display.update(pygame.Rect(0,0,width,height))
 	# datetime.datetime.now()
+	splash_message = "agua igua salud!"
 	if  now == 0:
-		splash_message = "agua pura!"
-		# ser3.write('hola mundo!!!      hola igua!!!    '.encode())
+		splash_message = "mas agua pura para todos!"
 	elif now == 1:
-		splash_message = "heladita!"
-		# ser3.write('chauuuuuuu!!!      hola igua!!!    '.encode())
+		splash_message = "cuida tu salud y la del planeta!"
 	elif now == 2:
-		splash_message = "llévala!"	
+		splash_message = "juntos contra el plastico"	
 	elif now == 3:
-		splash_message = "... a S/. 0.50 el litro"
+		splash_message = "f/aguaigua  http://igua.pe"
 	elif now == 4:
-		splash_message = "... a S/. 0.20 los 400 ml "	
+		splash_message = "hola mundo! hola igua!"	
 	elif now == 5:
-		splash_message = " conserva tu botella! "
+		splash_message = "agua igua! salud! "
 		
 	msgSurfaceObj = fontObj.render(splash_message, False,whiteColor)
 	msgRectobj = msgSurfaceObj.get_rect()   

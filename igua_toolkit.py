@@ -20,11 +20,17 @@
 # usando el Nexxt, la ip de la maquina suele ser:
 # 192.168.0.100
 
+# es necesario instalar el pynput para poder recibir las teclas 
+# python3 -m pip install Pynput
+
+
 #modulos custom
 from igua_display import startdisplay, refreshdisplay 
 from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
 from igua_display import display_acumula_pwyw, display_acumula_linear
 from igua_display import display_servidos_lt, display_agradece 
+from pynput.keyboard import Key, Listener
+
 
 
 #from display + coinacceptor
@@ -46,6 +52,70 @@ now_1 = 0
 #globales del keypad
 keypadcredit = float(0.0)
 cancelrequest_timeout = 0
+keypadcreditbuffer = ''
+
+
+# para el keypad
+def on_press(key):
+	global cancelrequest_timeout
+	global keypadcredit
+	global keypadcreditbuffer
+	global process_id
+	k = 0   #declarando indice para cadena
+	#para monitorear todas las teclas
+	print('{0} pressed'.format(key))
+	
+	
+	#caso que se haya ingresado enter
+	if key == Key.enter and process_id==0:
+		print("se presionó enter")
+		keypadcreditbuffer = keypadcreditbuffer.replace(",", ".")
+
+		try:
+			if float(keypadcreditbuffer) > 2.0:
+				print("valor sospechosamente alto. se descarta. ")
+				keypadcredit = float(0.0)
+				print("keypadcredit resulting value: " + str(keypadcredit))
+			else:
+				keypadcredit = float(keypadcreditbuffer)
+				print("se convirtio el valor de teclado en float.")
+				print("keypadcredit verified value: " + str(keypadcredit))
+		except:
+			print("no fue posible convertir creditbuffer a float.")
+			keypadcredit = float(0.0)
+			pass	
+		
+		
+		print("old keypadcreditbuffer value was: " + str(keypadcreditbuffer))
+		keypadcreditbuffer = ""
+		keypadcreditbuffer = ""
+		print("new keypadcreditbuffer value is: " + str(keypadcreditbuffer))
+	
+	#caso que sea cualquier otra tecla, acumular cadena	
+	elif process_id==0 and key == Key.backspace:
+		keypadcreditbuffer = ""
+		print("se borro la cadena, ahora solo queda un string vacio como este: " + keypadcreditbuffer)
+	
+	elif process_id==0:
+		keypadcreditbuffer = keypadcreditbuffer + str(key)[1:2]
+		print("se va acumulando la cadena: " + keypadcreditbuffer)
+		
+	elif process_id==3 and key == Key.backspace:
+		print("se presiono backspace para cancelar tiempo de servida.")
+		cancelrequest_timeout = 1		
+	
+	else:
+		pass
+   
+
+def on_release(key):
+    # print('{0} release'.format(key))
+    # if key == Key.esc:
+        # Stopstener
+    #    return False
+    sleep(0)
+    
+#fin para el keypad
 
 #importando modulos genericos
 from time import sleep
@@ -75,32 +145,13 @@ class myThread (threading.Thread):
       threadLock.release()
 
 def keyboardpoller():
-	global keypadcredit
-	global process_id
-	global cancelrequest_timeout
 	while 1==1:
-		print ("Hola! Soy el 2do thread!")
-		
-		if process_id == 0:
-			plata = input("esperando teclas..... ")
-			print ("se ingreso por teclado: " + plata)
-			try: 
-				keypadcredit = float(plata)
-				if keypadcredit > 2.00:
-					keypadcredit = 0.0
-			except:
-				pass
-		
-		if process_id == 3:
-			plata = input("keypad podria cancalar..... ")
-			print ("se ingreso por teclado: " + plata)
-			try: 
-				keypadcredit = 0.0
-				process_id = 4
-				cancelrequest_timeout = 1
-			except:
-				pass
-		
+		# Collect events until released
+		with Listener(
+				on_press=on_press,
+				on_release=on_release) as listener:
+			listener.join()
+
    
 
 threadLock = threading.Lock()
@@ -231,23 +282,9 @@ startdisplay()
 #main loop
 
 #para carriots
-device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device
-# device = "IGUA_FEST_1@kikomayorga.kikomayorga"
-# device = "IGUA_FEST_1@kikomayorga.kikomayorga"
-# device = "IGUA_FEST_1@kikomayorga.kikomayorga"
-# device = "IGUA_FEST_1@kikomayorga.kikomayorga"
-# device = "IGUA_FEST_CHANCHA@kikomayorga.kikomayorga"
-# device = "IGUA_FEST_DMD@kikomayorga.kikomayorga"  
+device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device  
 apikey = "8971eb3a06dd2d55a7794f6c5c0067cbd8d349a04fd67fc611dc0dec552c41ce"  # Replace with your Carriots apikey
 client_carriots = Client(apikey)
-
-# ejemplo de curl "para traer todos los ulktimos streams"
-# curl --header carriots.apikey:13f622d642b12cc336fa6bfde36e1561c6ac7eea19bd88d7c32246d0fca45691 http://api.carriots.com/streams/?device=IGUA01@kikomayorga.kikomayorga
-
-#para carriots
-
-
-
 
 #para lcd
 def lcd_bienvenida_linear(now):
@@ -506,14 +543,14 @@ while 1 == 1:
 		ferrosacumulados = 0
 		now_1 = now
 		now = time.time()
-		now = int((now/2)%10)
+		now = int((now/4)%6)
 		if now != now_1:
 			if modo_maquina == 0:
-				# display_bienvenida_linear(now)
+				display_bienvenida_linear(now)
 				lcd_bienvenida_linear(now)
 			if modo_maquina == 1:
 				display_bienvenida_pwyw(now)
-				lcd_bienvenida_pwyw(now)  # cuidado CUIDADO!!!!
+				lcd_bienvenida_pwyw(now)  # cuidado CUIDADO!!!! no existe declaración!
 				
 		ahora = time.time()
 		# print(ahora - hora_de_ultimo_ozono)
@@ -528,11 +565,6 @@ while 1 == 1:
 			hora_de_ultimo_ozono = time.time()
 			print('estamos listos!')
 
-
-			
-		
-			
-		
 	
     #leer aceptador de monedas
 		before = int(time.time())
@@ -611,11 +643,10 @@ while 1 == 1:
 	elif process_id == 2:	
 		# enciende el pin de Ozono
 		set_ozono(0)
-		
 		# muestra display "OZONIZANDO"
 		# lcd_ozonizando()
 		# espera N segs
-		sleep(0.1)
+		sleep(0)
 		set_ozono(0)
 		# apaga el pin de Ozono
 		process_id = 3
@@ -623,12 +654,6 @@ while 1 == 1:
 	# habilitada vavula y muestra litros
 	elif process_id == 3:
 		set_accepting(1)
-		print("estoy en el PID3")
-		# ser_flw.flushInput()
-		# read_psi()
-		# clean_string_psi()
-		# update_globalvars_psi()
-		# read_tds()
 		ser_flw.write('a'.encode())
 		sleep(0.1)
 		read_flw()
@@ -687,7 +712,7 @@ while 1 == 1:
 				process_id = 4
 				
 			if cancelrequest_timeout == 1:
-				print ("se cancelo el tiempo de espera")
+				print ("se cancelo el tiempo de espera (backspace)")
 				set_valve(0)   #cerrando la valvula
 				# send_to_carriots()
 				cancelrequest_timeout = 0
@@ -701,6 +726,7 @@ while 1 == 1:
 	elif process_id == 4:
 
 		keypadcredit = 0
+		keypadcreditbuffer = ""
 		
 		sleep(0.5)
 		
@@ -735,8 +761,4 @@ while 1 == 1:
 				process_id = 0
 				#   apagar ozono
 	
-	
-
-
-# todo: rfid
 	
