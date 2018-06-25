@@ -320,11 +320,11 @@ def lcd_bienvenida_pwyw(now):
 	return 1
 
 def lcd_acumula_linear(solesacumulados):
-	ser_lcd.write(('saldo: S/ ' + str(format(solesacumulados, '.2f'))).encode())
+	ser_lcd.write(('tienes: S/ ' + str(format(solesacumulados, '.2f')) + '                 ').encode())
 	return 1
 	
 def lcd_acumula_pwyw(solesacumulados):
-	ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f'))).encode())	
+	ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f')) + '             ').encode())	
 		
 def lcd_servidos_lt(servidos_lt,diff):
 	global button
@@ -339,7 +339,7 @@ def lcd_ozonizando():
 	ser_lcd.write('... ozonizando ...              '.encode())	
 	
 def lcd_cancelando():
-	ser_lcd.write('... CANCELANDO ...              '.encode())	
+	ser_lcd.write('...RESTABLECIENDO...            '.encode())	
 
 def lcd_agradece():
 	ser_lcd.write('... gracias !!!                 '.encode())	
@@ -581,9 +581,11 @@ while 1 == 1:
 			if modo_maquina == 0:
 				display_acumula_linear(solesacumulados)
 				lcd_acumula_linear(solesacumulados)
+				sleep(1)
 			if modo_maquina == 1:
 				display_acumula_pwyw(solesacumulados)
 				lcd_acumula_pwyw(solesacumulados)
+				sleep(1)
 			print("nosvamosalpid2")
 			process_id = 2;
 			
@@ -704,7 +706,7 @@ while 1 == 1:
 				lcd_agradece()
 				process_id = 4
 					
-			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en re-servir		
+			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en 0.0.2 re-servir		
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
 				send_to_carriots()
@@ -716,6 +718,8 @@ while 1 == 1:
 				set_valve(0)   #cerrando la valvula
 				# send_to_carriots()
 				cancelrequest_timeout = 0
+				lcd_cancelando()
+				sleep(0.1)
 				lcd_cancelando()
 				process_id = 4
 				
