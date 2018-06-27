@@ -494,12 +494,13 @@ def send_to_carriots():  #send collected data to carriots
 	global device
 	global servidos_lt
 	global solesacumulados
+	global formadepago
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
 	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "forma de pago": formadepago, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
@@ -531,6 +532,7 @@ servidos_litros_older = 0
 loopcounter = 0	
 servidos_total_old = 0
 precio = 0.5
+formadepago = "keypad"
 
 # last_string_psi_10 = "default string"
 # last_string_psi_9 = "default string"
@@ -591,14 +593,15 @@ while 1 == 1:
 
 	
     #leer aceptador de monedas
-		before = int(time.time())
-		
+		before = int(time.time())    #se necesita esto aqui?
 		bytesToRead = ser_acc.inWaiting()
 		if bytesToRead > 0:
-			now = int(time.time())
+			formadepago = "cash"
+			now = int(time.time())   #se necesita esto aqui?
 			process_id = 1
 			
 		if keypadcredit > 0.0:
+			formadepago = "keypad"
 			solesacumulados = keypadcredit
 			before = int(time.time())  #se necesita esto?			
 			if modo_maquina == 0:
@@ -722,14 +725,12 @@ while 1 == 1:
 			if (servidos_lt - litros_servir) > 0:  # si se pasa del limite a servir
 				print ("se pasó del volumen a servir")
 				set_valve(0)
-				send_to_carriots()
 				lcd_agradece()
 				process_id = 4
 					
 			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en 0.0.2 re-servir		
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
-				send_to_carriots()
 				lcd_agradece()
 				process_id = 4
 				
@@ -748,21 +749,26 @@ while 1 == 1:
 
 	# deshabilita vavula y ozonizando
 	elif process_id == 4:
-
-		keypadcredit = 0
-		keypadcreditbuffer = ""
 		
-		sleep(0.5)
-		
-		#resetea el flujometro
-		ser_flw.write('aasdfasdf'.encode())
-		
-		#anexa al archivo en local
+		#registra la transacción en la nube
+		send_to_carriots()
+        
+        #anexa al archivo en local
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		fd = open('IGUA_DANNY_log.csv','a')
 		# fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodega, volumen: ' + str(format(string_flw, '.3f')) + "\n")
 		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodegadanny, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
 		fd.close()
+        
+        #resetea variables para nuevo ciclo
+		keypadcredit = 0
+		keypadcreditbuffer = ""
+		
+		#resetea el flujometro
+		ser_flw.write('aasdfasdf'.encode())
+		
+		
+		#bloque de ozono 
 		
 		# set_ozono(1)		
 		# muestra display "OZONIZANDO"
@@ -771,15 +777,10 @@ while 1 == 1:
 		# sleep(10)
 		# set_ozono(0)
 		
-		before = int(time.time()) 
-		# print("before: ", before)
-
-		
+		before = int(time.time()) 		
 		while process_id==4:
 			now = int(time.time())
-			# print("now: ", now)	
 			diff = now - before
-			# print("diff: ", diff)
 			if diff > 1:
 				set_UV(1)
 				process_id = 0
