@@ -600,8 +600,7 @@ while 1 == 1:
 			
 		if keypadcredit > 0.0:
 			solesacumulados = keypadcredit
-			before = int(time.time())  #se necesita esto?
-			
+			before = int(time.time())  #se necesita esto?			
 			if modo_maquina == 0:
 				display_acumula_linear(solesacumulados)
 				lcd_acumula_linear(solesacumulados)
@@ -610,7 +609,6 @@ while 1 == 1:
 				display_acumula_pwyw(solesacumulados)
 				lcd_acumula_pwyw(solesacumulados)
 				sleep(1)
-			print("nosvamosalpid2")
 			process_id = 2;
 			
 			
@@ -623,8 +621,6 @@ while 1 == 1:
 		if bytesToRead > 0:
 			sleep(0.5)
 			bytesToRead = ser_acc.inWaiting()
-			# print("bytes to read: ", bytesToRead)
-			# string_igua = str(ser_acc.readline(),'utf-8')
 			string_igua = ser_acc.read(2)		
 			ferros = int(string_igua)
 			ferrosacumulados = ferrosacumulados + ferros
