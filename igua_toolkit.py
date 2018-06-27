@@ -97,10 +97,34 @@ def on_press(key):
 		print("se borro la cadena, ahora solo queda un string vacio como este: " + keypadcreditbuffer)
 	
 	elif process_id==0:
+		
+		if key == Key.end:
+			key = "'1'"
+		if key == Key.down:
+			key = "'2'"
+		if key == Key.page_down:
+			key = "'3'"
+		if key == Key.left:
+			key = "'4'"
+		if str(key)[0:1]=="<":
+			key = "'5'"
+		if key == Key.right:
+			key = "'6'"
+		if key == Key.home:
+			key = "'7'"
+		if key == Key.up:
+			key = "'8'"			
+		if key == Key.page_up:
+			key = "'9'"			
+		if key == Key.insert:
+			key = "'0'"
+		if key == Key.delete:
+			key = "'.'"			
+
 		keypadcreditbuffer = keypadcreditbuffer + str(key)[1:2]
 		print("se va acumulando la cadena: " + keypadcreditbuffer)
 		
-	elif process_id==3 and key == Key.backspace:
+	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
 		cancelrequest_timeout = 1		
 	
@@ -339,7 +363,7 @@ def lcd_ozonizando():
 	ser_lcd.write('... ozonizando ...              '.encode())	
 	
 def lcd_cancelando():
-	ser_lcd.write('...RESTABLECIENDO...            '.encode())	
+	ser_lcd.write('..gracias! ...       #tomaigua !'.encode())	
 
 def lcd_agradece():
 	ser_lcd.write('... gracias !!!                 '.encode())	
