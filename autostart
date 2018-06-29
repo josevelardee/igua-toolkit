@@ -1,7 +1,5 @@
-# se coloca en:/home/pi/.config/lxsession/LXDE-pi
-
 @lxpanel --profile LXDE-pi
 @pcmanfm --desktop --profile LXDE-pi
 @xscreensaver -no-splash
 @point-rpi
-# @/usr/bin/python3 /home/pi/igua-toolkit/igua_toolkit.py
+@/usr/bin/python3 /home/pi/igua-toolkit/igua_toolkit.py >> logfile.log 2>&1
