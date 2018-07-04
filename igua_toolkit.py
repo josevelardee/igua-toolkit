@@ -23,6 +23,42 @@
 # es necesario instalar el pynput para poder recibir las teclas 
 # python3 -m pip install Pynput
 
+# estoy probando usar gspreadsheets como database
+# utilizando: https://sheetsu.com/sheets-python : )    pero me quiere cobrar $33 anuales : O
+
+
+
+# instalando un logger
+import logging
+
+logger = logging.getLogger('scope.name')
+
+file_log_handler = logging.FileHandler('logfile.log')
+logger.addHandler(file_log_handler)
+
+stderr_log_handler = logging.StreamHandler()
+logger.addHandler(stderr_log_handler)
+
+# nice output format para el logger
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_log_handler.setFormatter(formatter)
+stderr_log_handler.setFormatter(formatter)
+
+logger.info('Info message')
+logger.error('Error message')
+
+'''
+#otra version de error logging que no la hizo
+import logging
+logger = logging.getLogger('myapp')
+hdlr = logging.FileHandler('/home/pi/igua-toolkit/errors.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr) 
+logger.setLevel(logging.WARNING)
+
+# hasta aquí con el logger
+'''
 
 #modulos custom
 from igua_display import startdisplay, refreshdisplay 
@@ -80,10 +116,34 @@ def on_press(key):
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
-		except:
-			print("no fue posible convertir creditbuffer a float.")
-			keypadcredit = float(0.0)
-			pass	
+		except:   #no se logró convertir a float, 
+			if keypadcreditbuffer[0:1] == "*":   #veamos si hay un código de iguapass
+				try: 
+					print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
+					print("buscando crédito ... ")
+					userpassnr = keypadcreditbuffer[1:5]
+					print('userpassnr es: ' + userpassnr)
+					#userpassnr = 'a' + userpassnr
+					#print('userpassnr + a, es: ' + userpassnr)
+					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+					worksheet = sheet.get_worksheet(0)
+					try:
+						passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
+						print('pass està en la celda: ' + str(passcelda))
+						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
+						dailycreditremains = worksheet.cell(passcelda.row,2).value
+						print('daily credit remains: ' + str(dailycreditremains))
+						# val = worksheet.cell(2, 1).value
+						# worksheet.update_cell(2, 1, '42') 
+						
+					except:
+						print('algo salio mal al bucar con find_ ')
+				except:	
+					print("no fue posible convertir nro de pass a int.")
+				keypadcredit = float(0.0)
+			else:
+				print("no fue posible leer cadena de keypad.")	
+				keypadcredit = float(0.0)
 		
 		
 		print("old keypadcreditbuffer value was: " + str(keypadcreditbuffer))
@@ -141,7 +201,17 @@ def on_release(key):
     
 #fin para el keypad
 
-#importando modulos genericos
+#para gspread (google "spreadsheets"(?) api)
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+scope = ['https://spreadsheets.google.com/feeds',
+         'https://www.googleapis.com/auth/drive']
+credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
+gc = gspread.authorize(credentials)
+# wks = gc.open("Where is the money Lebowski?").sheet1
+sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+
+#importando funciones y librerias
 from time import sleep
 from time import strftime 
 import time
@@ -264,6 +334,8 @@ def rc_time(pipin):
     
     
 #fin para carriots
+
+
 
 # declaramos una función que la usaremos mas adelante para 
 # validar conexion disponible
