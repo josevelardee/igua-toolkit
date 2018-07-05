@@ -44,21 +44,10 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 file_log_handler.setFormatter(formatter)
 stderr_log_handler.setFormatter(formatter)
 
-logger.info('Info message')
-logger.error('Error message')
+# logger.info('Info message')
+# logger.error('Error message')
 
-'''
-#otra version de error logging que no la hizo
-import logging
-logger = logging.getLogger('myapp')
-hdlr = logging.FileHandler('/home/pi/igua-toolkit/errors.log')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr) 
-logger.setLevel(logging.WARNING)
 
-# hasta aquí con el logger
-'''
 
 #modulos custom
 from igua_display import startdisplay, refreshdisplay 
@@ -202,14 +191,17 @@ def on_release(key):
 #fin para el keypad
 
 #para gspread (google "spreadsheets"(?) api)
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
-credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
-gc = gspread.authorize(credentials)
-# wks = gc.open("Where is the money Lebowski?").sheet1
-sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+try: 
+	import gspread
+	from oauth2client.service_account import ServiceAccountCredentials
+	scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+	credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
+	gc = gspread.authorize(credentials)
+	# wks = gc.open("Where is the money Lebowski?").sheet1
+	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+
+except:
+	logger.error('No fue posible importar librerìa *logging*')
 
 #importando funciones y librerias
 from time import sleep
