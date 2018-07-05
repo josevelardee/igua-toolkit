@@ -1,18 +1,20 @@
 #!/usr/bin/python3 import os
 
-# sleep(15)
+###########################################################
 
-# how to set to autostart:
-# lo mismo pero adaptado a raspi: https://www.raspberrypi-spy.co.uk/2014/05/how-to-autostart-apps-in-rasbian-lxde-desktop/
-# lo que funcó para hacer autostart: editamos este file: 
-# sudo nano ~/.config/lxsession/LXDE-pi/autostart
-# y alli adentro ponemos lo sgte: 
-# @sudo /home/pi/Desktop/igua-toolkit/run.sh
-# notar que debes escribilo antes de la linea que dice "screensaver"
-# luego conviene crear un bookmark en el filemanager (pcmanfm) a la carpeta .config/lxsession/LXDE-pi/
+#          IGUA TOOLKIT
 
-# para configurar qué redes queremos aprender u olvidar: 
-# sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+#          V0.1
+
+###########################################################
+
+# ¿Cómo preparar una máquina IGUA?
+
+# se necesita instalar librerìas de pyhton:
+# para leer el teclado en background:
+# python3 -m pip install Pynput
+# para conectar con google sheets:
+# pip3 install gspread (como pi para que funcione el autoarranque)
 
 # para clonar la carpeta de github a local:
 # git clone http://github.com/kikomayorga/igua_toolkit/
@@ -20,34 +22,30 @@
 # usando el Nexxt, la ip de la maquina suele ser:
 # 192.168.0.100
 
-# es necesario instalar el pynput para poder recibir las teclas 
-# python3 -m pip install Pynput
+# para configurar qué redes queremos aprender u olvidar: 
+# sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 
-# estoy probando usar gspreadsheets como database
-# utilizando: https://sheetsu.com/sheets-python : )    pero me quiere cobrar $33 anuales : O
+# para hacer autostart: 
+# vamos a este folder: ~/.config/lxsession/LXDE-pi/
+# y alli pegamos y sobreescribimos con el archivo autostart que viene 
+# en el folder igua-toolkit
 
-
+###########################################################
 
 # instalando un logger
 import logging
 
 logger = logging.getLogger('scope.name')
-
 file_log_handler = logging.FileHandler('logfile.log')
 logger.addHandler(file_log_handler)
-
 stderr_log_handler = logging.StreamHandler()
 logger.addHandler(stderr_log_handler)
-
 # nice output format para el logger
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_log_handler.setFormatter(formatter)
 stderr_log_handler.setFormatter(formatter)
-
 # logger.info('Info message')
 # logger.error('Error message')
-
-
 
 #modulos custom
 from igua_display import startdisplay, refreshdisplay 
@@ -56,20 +54,14 @@ from igua_display import display_acumula_pwyw, display_acumula_linear
 from igua_display import display_servidos_lt, display_agradece 
 from pynput.keyboard import Key, Listener
 
-
-
-#from display + coinacceptor
-
+#inicializando variables
+process_id = 0                  #
 last = 0.0
 running = 1
-
-
 solesacumulados = 0   			#transaction-wise accumulator
 ferrosacumulados = 0  			#transaction-wise accumulator
-cuenta_de_ciclos = 0				#transactions counter on eeprom	
-
-process_id = 0                  #
-modo_maquina = 0  # 1: pay what you want , 0: linear mode
+cuenta_de_ciclos = 0			#transactions counter on eeprom	FUNCIONA?????
+modo_maquina = 0  				# 1: pay what you want , 0: linear mode
 button_state = 0
 now = 0
 now_1 = 0
@@ -201,7 +193,7 @@ try:
 	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 
 except:
-	logger.error('No fue posible importar librerìa *logging*')
+	logger.error('No fue posible importar librerìa *logging*. probar con instalar: pip3 install gspread')
 
 #importando funciones y librerias
 from time import sleep
@@ -214,7 +206,6 @@ import threading
 
 REMOTE_SERVER = "www.google.com"
 
-# ///////////////////////////////////////////////////////////////
 # para threading
 class myThread (threading.Thread):
    def __init__(self, threadID, name, counter):
@@ -238,29 +229,12 @@ def keyboardpoller():
 				on_release=on_release) as listener:
 			listener.join()
 
-   
-
+#creamos thread y lo inicializamos
 threadLock = threading.Lock()
 threads = []
-
-# Create new threads
 thread1 = myThread(1, "keylistener", 1)
-# thread2 = myThread(2, "Thread-2", 2)
-
-# Start new Threads
 thread1.start()
-# thread2.start()
-
-# Add threads to thread list
 threads.append(thread1)
-# threads.append(thread2)
-
-# Wait for all threads to complete
-# for t in threads:
-#   t.join()
-# print ("Exiting Main Thread")
-# fin threading
-# ///////////////////////////////////////////////////////////////
 
 
 # configuaracion de entradas/saldas del RPI
@@ -283,6 +257,7 @@ GPIO.setup(ozono, GPIO.OUT)
 GPIO.setup(spritz_relay, GPIO.OUT)
 GPIO.setup(coinhibitor_relay, GPIO.OUT)
 GPIO.setup(UV_relay, GPIO.OUT)
+
 
 #para carriots
 from urllib.request import urlopen, Request
@@ -310,28 +285,32 @@ class Client (object):
         request = Request(Client.api_url, self.data, self.headers)     
         self.response = urlopen(request)
         return self.response
-        
-def rc_time(pipin):
-    measurement = 0
-    GPIO.setup(pipin, GPIO.OUT)
-    GPIO.output(pipin, GPIO.LOW)
-    sleep(0.1)
 
-    GPIO.setup(pipin, GPIO.IN)
+def send_to_carriots():  #send collected data to carriots
+	global device
+	global servidos_lt
+	global solesacumulados
+	global formadepago
+	timestamp = int(mktime(datetime.utcnow().timetuple()))
+	solesstring = str(format(solesacumulados*100, ".0f"))
+	mlservidosstring = str(format(servidos_lt, ".0f"))
+	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "forma de pago": formadepago, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
+	print(data)
+	if is_connected() == True:
+		carriots_response = client_carriots.send(data)
+		print('conexion ok!')
+		print(carriots_response.read())
+	else:
+		print('no connectivity available')
+		
+#para carriots
+device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device  
+apikey = "8971eb3a06dd2d55a7794f6c5c0067cbd8d349a04fd67fc611dc0dec552c41ce"  # Replace with your Carriots apikey
+client_carriots = Client(apikey)
 
-    while GPIO.input(pipin) == GPIO.LOW:
-        measurement += 1
 
-    return measurement
-    
-    
-#fin para carriots
-
-
-
-# declaramos una función que la usaremos mas adelante para 
-# validar conexion disponible
-
+# funciòn que verifica conectividad
 def is_connected():
     try:
         host = socket.gethostbyname(REMOTE_SERVER)
@@ -341,6 +320,7 @@ def is_connected():
         pass
     return False
 
+# declarar los puertos serialers en caso que se use máquina modo usb
 ser_acc = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
 ser_flw =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
 ser_lcd =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS)
@@ -362,18 +342,10 @@ def read_flw():
 		string_flw = string_flw.strip('\r\n')
 		
 
-
-
-#setup
+# setup display
 startdisplay()
 		
-#main loop
-
-#para carriots
-device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device  
-apikey = "8971eb3a06dd2d55a7794f6c5c0067cbd8d349a04fd67fc611dc0dec552c41ce"  # Replace with your Carriots apikey
-client_carriots = Client(apikey)
-
+		
 #para lcd
 def lcd_bienvenida_linear(now):
 	if  now == 0:
@@ -510,10 +482,7 @@ def read_psi():
 		string_psi = str(ser_psi.readline(),'utf-8')
 		# print("received on ser_psi: ", string_psi)
 	
-def detectaUsb():
-	try ser_flw =  serial.Serial('/dev/ttyACM1',9600,timeout = None)
-	
-	 
+
 def clean_string_psi():
 		global string_psi	
 		global string_psi_array
@@ -554,24 +523,6 @@ def update_globalvars_psi():
 		string_psi_psi3 = string_psi_array[5]
 		'''
 				
-def send_to_carriots():  #send collected data to carriots
-	global device
-	global servidos_lt
-	global solesacumulados
-	global formadepago
-	timestamp = int(mktime(datetime.utcnow().timetuple()))
-	timestamp = int(mktime(datetime.utcnow().timetuple()))
-	solesstring = str(format(solesacumulados*100, ".0f"))
-	mlservidosstring = str(format(servidos_lt, ".0f"))
-	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "forma de pago": formadepago, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
-	print(data)
-	if is_connected() == True:
-		carriots_response = client_carriots.send(data)
-		print('conexion ok!')
-		print(carriots_response.read())
-	else:
-		print('no connectivity available')
 		
 def read_flw():
 	global ser_flw
