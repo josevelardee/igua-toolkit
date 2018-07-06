@@ -85,52 +85,78 @@ def on_press(key):
 	
 	#caso que se haya ingresado enter
 	if key == Key.enter and process_id==0:
+		userpassnr = '0000'   #codigo por defecto
+		pass_row = [0,0,0]
+		keypadcredit = float(0.0)
 		print("se presionó enter")
 		keypadcreditbuffer = keypadcreditbuffer.replace(",", ".")
 
 		try:
 			if float(keypadcreditbuffer) > 2.0:
 				print("valor sospechosamente alto. se descarta. ")
-				keypadcredit = float(0.0)
 				print("keypadcredit resulting value: " + str(keypadcredit))
+				
 			else:
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
-		except:   #no se logró convertir a float, 
-			if keypadcreditbuffer[0:1] == "*":   #veamos si hay un código de iguapass
-				try: 
-					print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
-					print("buscando crédito ... ")
-					userpassnr = keypadcreditbuffer[1:5]
-					print('userpassnr es: ' + userpassnr)
-					#userpassnr = 'a' + userpassnr
-					#print('userpassnr + a, es: ' + userpassnr)
+				
+		except:   
+				print("el nro del keypad no se logró convertir a soles")
+				
+		if keypadcreditbuffer[0:1] == "*":   #veamos si hay un código de iguapass
+			print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
+			print("buscando crédito ... ")
+			
+			try:
+				userpassnr = keypadcreditbuffer[1:5]
+				dummyint = int(userpassnr)
+				print('userpassnr es: ' + userpassnr)
+			except: 
+				print("el código debe contener solo caracteres numericos")
+					
+			if userpassnr != '0000':
+				print('pasó, hay un nro diferente de cero')
+				try:
 					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 					worksheet = sheet.get_worksheet(0)
-					try:
-						passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
-						print('pass està en la celda: ' + str(passcelda))
-						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
-						dailycreditremains = worksheet.cell(passcelda.row,2).value
-						print('daily credit remains: ' + str(dailycreditremains))
-						# val = worksheet.cell(2, 1).value
-						# worksheet.update_cell(2, 1, '42') 
+					passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
+					# print('pass està en la celda: ' + str(passcelda))
+					# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
+					pass_row = worksheet.row_values(passcelda.row)
+					print('exito! se encontró igua pass')
+				except: 
+					print('no fue posible obtener registro de iguapass')
+		
+			if pass_row != [0]:
+				print(pass_row)
+				if len(pass_row) <2:    #descartamos que la fila esté vacía
+					print('cuenta sin datos. osea fila de excel vacía')
+				else:
+					pass_user = pass_row[0]
+					pass_plantype = pass_row[1]
+					pass_activeflag = pass_row[2]
+					pass_activationdate = pass_row[3]
+					if pass_activeflag == '0':
+						pass_activeflag = 1
+						pass_activationdate = datetime.now().timetuple().tm_yday
+						try:
+							worksheet.update_cell(passcelda.row, 3, pass_activationdate)
+							print('se actualizó registro de fecha de activación')
+						except:
+							print('no se pudo completar registro de fecha de activación')
 						
-					except:
-						print('algo salio mal al bucar con find_ ')
-				except:	
-					print("no fue posible convertir nro de pass a int.")
-				keypadcredit = float(0.0)
-			else:
-				print("no fue posible leer cadena de keypad.")	
-				keypadcredit = float(0.0)
-		
-		
-		print("old keypadcreditbuffer value was: " + str(keypadcreditbuffer))
+						try:
+							worksheet.update_cell(passcelda.row, 4, '1')
+							print('se actualizó registro de activeflag')
+						except:
+							print('no se pudo completar registro de activeflag')
+						
+					# pass_credits[7] = [pass_row[4], pass_row[5], pass_row[6], pass_row[7], pass_row[8], pass_row[9], pass_row[10]]
+					print('qué éxito!')
+					print('   ' + str(pass_user) + '   ' + str(pass_plantype) + '   ' + str(pass_activeflag))
+				
 		keypadcreditbuffer = ""
-		keypadcreditbuffer = ""
-		print("new keypadcreditbuffer value is: " + str(keypadcreditbuffer))
 	
 	#caso que sea cualquier otra tecla, acumular cadena	
 	elif process_id==0 and key == Key.backspace:
