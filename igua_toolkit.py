@@ -158,7 +158,7 @@ def on_press(key):
 			if pass_row != [0]:
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
-					print('cuenta sin suficientes datos. osea fila de excel vacía')
+					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
 				else:
 					pass_user = pass_row[0]
 					pass_plantype = pass_row[1]
@@ -170,19 +170,14 @@ def on_press(key):
 						try:
 							worksheet.update_cell(passcelda.row, 4, pass_activationdate)
 							print('se actualizó registro de fecha de activación')
-						except:
-							print('no se pudo completar registro de fecha de activación')
-						
-						try:
 							worksheet.update_cell(passcelda.row, 3, '1')
 							print('se actualizó registro de activeflag')
 						except:
-							print('no se pudo completar registro de activeflag')
-						
-					# pass_credits[7] = [pass_row[4], pass_row[5], pass_row[6], pass_row[7], pass_row[8], pass_row[9], pass_row[10]]
+							print('no se pudo completar registro de fecha de activación')
+							print('o, no se pudo completar registro de activeflag')						
 					
 					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
-					pass_credit_today = int(pass_row[(4 + pass_dia_N)])
+					pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
 					else:
@@ -237,7 +232,7 @@ def escribir_nuevo_saldo_para_pass():
 	global pass_dia_N
 	global pass_credit_today
 	global worksheet
-	worksheet.update_cell(passcelda.row, (pass_dia_N + 5), pass_credit_today)
+	worksheet.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
 	'''
 	try:
 		worksheet.update_cell(passcelda.row, pass_dia_N, '')
