@@ -70,7 +70,9 @@ now_1 = 0
 keypadcredit = float(0.0)
 cancelrequest_timeout = 0
 keypadcreditbuffer = ''
-
+pass_credit_today = 0
+passcelda = ''
+pass_dia_N = 1000    #un nro mayor al tope de 7 o 30, se chancará
 
 # para el keypad
 def on_press(key):
@@ -78,6 +80,12 @@ def on_press(key):
 	global keypadcredit
 	global keypadcreditbuffer
 	global process_id
+	global pass_credit_today
+	global passcelda
+	global pass_dia_N
+	global formadepago
+	global worksheet
+	
 	k = 0   #declarando indice para cadena
 	#para monitorear todas las teclas
 	print('{0} pressed'.format(key))
@@ -131,7 +139,7 @@ def on_press(key):
 			if pass_row != [0]:
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
-					print('cuenta sin datos. osea fila de excel vacía')
+					print('cuenta sin suficientes datos. osea fila de excel vacía')
 				else:
 					pass_user = pass_row[0]
 					pass_plantype = pass_row[1]
@@ -141,20 +149,27 @@ def on_press(key):
 						pass_activeflag = 1
 						pass_activationdate = datetime.now().timetuple().tm_yday
 						try:
-							worksheet.update_cell(passcelda.row, 3, pass_activationdate)
+							worksheet.update_cell(passcelda.row, 4, pass_activationdate)
 							print('se actualizó registro de fecha de activación')
 						except:
 							print('no se pudo completar registro de fecha de activación')
 						
 						try:
-							worksheet.update_cell(passcelda.row, 4, '1')
+							worksheet.update_cell(passcelda.row, 3, '1')
 							print('se actualizó registro de activeflag')
 						except:
 							print('no se pudo completar registro de activeflag')
 						
 					# pass_credits[7] = [pass_row[4], pass_row[5], pass_row[6], pass_row[7], pass_row[8], pass_row[9], pass_row[10]]
-					print('qué éxito!')
-					print('   ' + str(pass_user) + '   ' + str(pass_plantype) + '   ' + str(pass_activeflag))
+					
+					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
+				pass_credit_today = int(pass_row[(4 + pass_dia_N)])
+					if pass_credit_today == 0:
+						print('no hay credito disponible por hoy')
+					else:
+						print('se cargó crédito de hoy: ' + str(pass_credit_today))
+						formadepago = 'pass'
+						process_id = 3  
 				
 		keypadcreditbuffer = ""
 	
@@ -198,7 +213,20 @@ def on_press(key):
 	else:
 		pass
    
-
+def escribir_nuevo_saldo_para_pass():
+	global passcelda
+	global pass_dia_N
+	global pass_credit_today
+	global worksheet
+	worksheet.update_cell(passcelda.row, (pass_dia_N + 5), pass_credit_today)
+	'''
+	try:
+		worksheet.update_cell(passcelda.row, pass_dia_N, '')
+		print('se actualizó saldo.')
+	except:
+		print('no se pudo actualizar saldo.')
+	'''
+		
 def on_release(key):
     # print('{0} release'.format(key))
     # if key == Key.esc:
@@ -217,9 +245,10 @@ try:
 	gc = gspread.authorize(credentials)
 	# wks = gc.open("Where is the money Lebowski?").sheet1
 	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+	worksheet = sheet.get_worksheet(0)
 
 except:
-	logger.error('No fue posible importar librerìa *logging*. probar con instalar: pip3 install gspread')
+	logger.error('No fue posible importar librerìa *gspread*. probar con instalar: pip3 install gspread')
 
 #importando funciones y librerias
 from time import sleep
@@ -728,7 +757,12 @@ while 1 == 1:
 
 						
 		if modo_maquina == 0:
-			litros_servir = 1000 * (solesacumulados / precio) 
+			if pass_credit_today != 0:
+				litros_servir = int(pass_credit_today)
+			else:
+				litros_servir = 1000 * (solesacumulados / precio) 
+		
+		# modo pay what you want
 		if modo_maquina == 1:
 			litros_servir = 1000
 		
@@ -767,18 +801,30 @@ while 1 == 1:
 				print ("se pasó del volumen a servir")
 				set_valve(0)
 				lcd_agradece()
+				if formadepago == "pass":
+					print(' formadepago =es= pass ')
+					pass_credit_today = 0
+					print(' remaining credit: ' + pass_credit_today)
+					escribir_nuevo_saldo_para_pass()
 				process_id = 4
 					
 			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en 0.0.2 re-servir		
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
 				lcd_agradece()
+				if formadepago == "pass":
+					print(' formadepago =es= pass ')
+					pass_credit_today = pass_credit_today - int(servidos_lt)
+					print(' remaining credit: ' + str(pass_credit_today))
+					escribir_nuevo_saldo_para_pass()
 				process_id = 4
 				
 			if cancelrequest_timeout == 1:
 				print ("se cancelo el tiempo de espera (backspace)")
 				set_valve(0)   #cerrando la valvula
-				# send_to_carriots()
+				if formadepago == "pass":
+					pass_credit_today = pass_credit_today - int(servidos_lt)
+					escribir_nuevo_saldo_para_pass()
 				cancelrequest_timeout = 0
 				lcd_cancelando()
 				sleep(0.1)
