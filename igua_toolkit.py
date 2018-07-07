@@ -15,6 +15,9 @@
 # python3 -m pip install Pynput
 # para conectar con google sheets:
 # pip3 install gspread (como pi para que funcione el autoarranque)
+# además hay que incluir el archivo "IGUA_DRIVE_SECRET.json"
+# además hay que hacer: pip3 install --upgrade oauth2client
+
 
 # para clonar la carpeta de github a local:
 # git clone http://github.com/kikomayorga/igua_toolkit/
@@ -135,6 +138,7 @@ def on_press(key):
 					print('exito! se encontró igua pass')
 				except: 
 					print('no fue posible obtener registro de iguapass')
+					pass_row = [0]
 		
 			if pass_row != [0]:
 				print(pass_row)
@@ -350,7 +354,7 @@ def send_to_carriots():  #send collected data to carriots
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
 	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "forma de pago": formadepago, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "forma de pago": formadepago, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
@@ -806,6 +810,7 @@ while 1 == 1:
 					pass_credit_today = 0
 					print(' remaining credit: ' + pass_credit_today)
 					escribir_nuevo_saldo_para_pass()
+					pass_credit_today = 0
 				process_id = 4
 					
 			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en 0.0.2 re-servir		
@@ -817,6 +822,7 @@ while 1 == 1:
 					pass_credit_today = pass_credit_today - int(servidos_lt)
 					print(' remaining credit: ' + str(pass_credit_today))
 					escribir_nuevo_saldo_para_pass()
+					pass_credit_today = 0            #una vez transferido el saldo a la db, borramos el credito local
 				process_id = 4
 				
 			if cancelrequest_timeout == 1:
@@ -825,6 +831,7 @@ while 1 == 1:
 				if formadepago == "pass":
 					pass_credit_today = pass_credit_today - int(servidos_lt)
 					escribir_nuevo_saldo_para_pass()
+					pass_credit_today = 0
 				cancelrequest_timeout = 0
 				lcd_cancelando()
 				sleep(0.1)
