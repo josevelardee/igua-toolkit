@@ -33,6 +33,21 @@
 # y alli pegamos y sobreescribimos con el archivo autostart que viene 
 # en el folder igua-toolkit
 
+# para poder entrar mejor con VNC, (resolucion por defecto es ridicula)
+# modificamos estas líneas en config.txt:
+# (basado en: https://www.youtube.com/watch?v=LlXx9yVfQ0k)
+# #uncomment to force a specific HDMI mode (this will force VGA)
+# #hdmi_group=1
+# #hdmi_mode=1
+# hdmi_ignore_edid=0xa5000080
+# hdmi_group=2
+# hdmi_mode=85
+
+# para poder acceder remotamente con dataplicity, es necesario ejecutar
+# un comando que se obtiene al crear una nueva cuenta con dataplicity
+# las cuentas dataplicity que estamos usando son igua.devs+001@gmail.com
+# donde 001 es para la maquina de dani, 002 es para la 2da azul
+
 ###########################################################
 
 # instalando un logger
