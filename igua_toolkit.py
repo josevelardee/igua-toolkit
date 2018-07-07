@@ -163,7 +163,7 @@ def on_press(key):
 					# pass_credits[7] = [pass_row[4], pass_row[5], pass_row[6], pass_row[7], pass_row[8], pass_row[9], pass_row[10]]
 					
 					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
-				pass_credit_today = int(pass_row[(4 + pass_dia_N)])
+					pass_credit_today = int(pass_row[(4 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
 					else:
