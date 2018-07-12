@@ -88,9 +88,11 @@ now_1 = 0
 keypadcredit = float(0.0)
 cancelrequest_timeout = 0
 keypadcreditbuffer = ''
+pass_user = '0000'
 pass_credit_today = 0
 passcelda = ''
 pass_dia_N = 1000    #un nro mayor al tope de 7 o 30, se chancará
+lcd_captured_by_keypad = 0
 
 # para el keypad
 def on_press(key):
@@ -98,16 +100,18 @@ def on_press(key):
 	global keypadcredit
 	global keypadcreditbuffer
 	global process_id
+	global pass_user
 	global pass_credit_today
 	global passcelda
 	global pass_dia_N
 	global formadepago
 	global worksheet
+	global lcd_captured_by_keypad
 	
 	k = 0   #declarando indice para cadena
 	#para monitorear todas las teclas
 	print('{0} pressed'.format(key))
-	
+	lcd_captured_by_keypad = 1
 	
 	#caso que se haya ingresado enter
 	if key == Key.enter and process_id==0:
@@ -120,29 +124,40 @@ def on_press(key):
 		try:
 			if float(keypadcreditbuffer) > 2.0:
 				print("valor sospechosamente alto. se descarta. ")
+				ser_lcd.write('Ingrese valor    menor a 2.00 S/'.encode())
 				print("keypadcredit resulting value: " + str(keypadcredit))
-				
+				lcd_captured_by_keypad = 0
+			
 			else:
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
+				ser_lcd.write(('se cargó soles:  S/' + str(keypadcredit)).encode())
 				
 		except:   
 				print("el nro del keypad no se logró convertir a soles")
+				# ser_lcd.write(('error de digitacion. ').encode())
+				# lcd_captured_by_keypad = 0
 				
-		if keypadcreditbuffer[0:1] == "*":   #veamos si hay un código de iguapass
+		if keypadcreditbuffer[0:1] == "*" or keypadcreditbuffer[0:1] == "+":   #veamos si hay un código de iguapass
 			print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
-			print("buscando crédito ... ")
+			
 			
 			try:
 				userpassnr = keypadcreditbuffer[1:5]
 				dummyint = int(userpassnr)
 				print('userpassnr es: ' + userpassnr)
+				ser_lcd.write(('su usuario es:    ' + userpassnr).encode())
+				
+				
 			except: 
 				print("el código debe contener solo caracteres numericos")
+				ser_lcd.write(('codigo no reconocido').encode())
+				# lcd_captured_by_keypad = 0
 					
 			if userpassnr != '0000':
 				print('pasó, hay un nro diferente de cero')
+				print("buscando crédito ... ")
 				try:
 					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 					worksheet = sheet.get_worksheet(0)
@@ -154,11 +169,15 @@ def on_press(key):
 				except: 
 					print('no fue posible obtener registro de iguapass')
 					pass_row = [0]
+					
 		
 			if pass_row != [0]:
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
 					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
+					ser_lcd.write(('codigo no reconocido').encode())
+					# lcd_captured_by_keypad = 0
+					
 				else:
 					pass_user = pass_row[0]
 					pass_plantype = pass_row[1]
@@ -180,8 +199,11 @@ def on_press(key):
 					pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
+						ser_lcd.write(('ooops! no hay credito disponible').encode())
+						lcd_captured_by_keypad = 0
 					else:
 						print('se cargó crédito de hoy: ' + str(pass_credit_today))
+						ser_lcd.write(('su saldo de hoy: ' + str(pass_credit_today)).encode())
 						formadepago = 'pass'
 						process_id = 3  
 				
@@ -191,6 +213,7 @@ def on_press(key):
 	elif process_id==0 and key == Key.backspace:
 		keypadcreditbuffer = ""
 		print("se borro la cadena, ahora solo queda un string vacio como este: " + keypadcreditbuffer)
+		lcd_captured_by_keypad = 0
 	
 	elif process_id==0:
 		
@@ -219,9 +242,11 @@ def on_press(key):
 
 		keypadcreditbuffer = keypadcreditbuffer + str(key)[1:2]
 		print("se va acumulando la cadena: " + keypadcreditbuffer)
+		ser_lcd.write(('>>> ' + keypadcreditbuffer + '          ').encode())
 		
 	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
+		lcd_captured_by_keypad = 0
 		cancelrequest_timeout = 1		
 	
 	else:
@@ -263,6 +288,39 @@ try:
 
 except:
 	logger.error('No fue posible importar librerìa *gspread*. probar con instalar: pip3 install gspread')
+	
+def registra_en_drive():
+	global device
+	global servidos_lt
+	global solesacumulados
+	global formadepago
+	global pass_user
+	# global worksheet2
+	
+	timestamp = int(mktime(datetime.utcnow().timetuple()))
+	solesstring = str(format(solesacumulados*100, ".0f"))
+	mlservidosstring = str(format(servidos_lt, ".0f"))
+	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
+	data = ["protocol: v2", device, timestamp, ("IGUA_01 - " + str(formadepago)), "passnumber:", pass_user, "colectado centavos", solesstring, "servido mililitros", mlservidosstring]
+	# Select a range
+	
+	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+	worksheet2 = sheet.get_worksheet(1)
+	next_row = worksheet2.cell(1, 1).value
+	cell_list = worksheet2.range('A' + str(next_row) + ':J' + str(next_row))
+	
+	looper = 0
+	for cell in cell_list:
+		cell.value = str(data[looper])
+		looper = looper + 1
+
+
+	# Update in batch
+	worksheet2.update_cells(cell_list)
+	next_row = int(next_row) + 1
+	worksheet2.update_acell('A1', next_row)
+	print(data)
+
 
 #importando funciones y librerias
 from time import sleep
@@ -360,11 +418,13 @@ def send_to_carriots():  #send collected data to carriots
 	global servidos_lt
 	global solesacumulados
 	global formadepago
+	global pass_user
+	
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
 	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_02", "forma de pago": formadepago, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": ("IGUA_01 - " + str(formadepago)), "iguapassnr: ": pass_user, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
 	print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
@@ -378,6 +438,7 @@ device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your dev
 apikey = "8971eb3a06dd2d55a7794f6c5c0067cbd8d349a04fd67fc611dc0dec552c41ce"  # Replace with your Carriots apikey
 client_carriots = Client(apikey)
 
+	
 
 # funciòn que verifica conectividad
 def is_connected():
@@ -417,34 +478,38 @@ startdisplay()
 		
 #para lcd
 def lcd_bienvenida_linear(now):
-	if  now == 0:
-		ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
-	elif now == 1:
-		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
-	elif now == 2:
-		ser_lcd.write('juntos contra      el plAstico!!'.encode())
-	elif now == 3:
-		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
-	elif now == 4:
-		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
-	elif now == 5:
-		ser_lcd.write('agua igua!!!           salud!   '.encode())
+	global lcd_captured_by_keypad
+	if lcd_captured_by_keypad == 0:
+		if  now == 0:
+			ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
+		elif now == 1:
+			ser_lcd.write('cuida tu salud..y la del planeta'.encode())
+		elif now == 2:
+			ser_lcd.write('juntos contra      el plAstico!!'.encode())
+		elif now == 3:
+			ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
+		elif now == 4:
+			ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
+		elif now == 5:
+			ser_lcd.write('agua igua!!!           salud!   '.encode())
 	
 	return 1
 
 def lcd_bienvenida_pwyw(now):
-	if  now == 0:
-		ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
-	elif now == 1:
-		ser_lcd.write('cuida tu salud..y la del planeta'.encode())
-	elif now == 2:
-		ser_lcd.write('y la del planeta                '.encode())
-	elif now == 3:
-		ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
-	elif now == 4:
-		ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
-	elif now == 5:
-		ser_lcd.write('agua igua,      salud!          '.encode())
+	global lcd_captured_by_keypad
+	if lcd_captured_by_keypad == 0:
+		if  now == 0:
+			ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
+		elif now == 1:
+			ser_lcd.write('cuida tu salud..y la del planeta'.encode())
+		elif now == 2:
+			ser_lcd.write('y la del planeta                '.encode())
+		elif now == 3:
+			ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
+		elif now == 4:
+			ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
+		elif now == 5:
+			ser_lcd.write('agua igua,      salud!          '.encode())
 	
 	return 1
 
@@ -817,7 +882,7 @@ while 1 == 1:
 				lcd_agradece()
 				if formadepago == "pass":
 					print(' formadepago =es= pass ')
-					pass_credit_today = 0
+					pass_credit_today = '0'
 					print(' remaining credit: ' + pass_credit_today)
 					escribir_nuevo_saldo_para_pass()
 					pass_credit_today = 0
@@ -856,6 +921,7 @@ while 1 == 1:
 		
 		#registra la transacción en la nube
 		send_to_carriots()
+		registra_en_drive()
         
         #anexa al archivo en local
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
@@ -867,6 +933,8 @@ while 1 == 1:
         #resetea variables para nuevo ciclo
 		keypadcredit = 0
 		keypadcreditbuffer = ""
+		
+		lcd_captured_by_keypad = 0
 		
 		#resetea el flujometro
 		ser_flw.write('aasdfasdf'.encode())
