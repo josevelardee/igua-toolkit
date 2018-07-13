@@ -142,7 +142,6 @@ def on_press(key):
 		if keypadcreditbuffer[0:1] == "*" or keypadcreditbuffer[0:1] == "+":   #veamos si hay un código de iguapass
 			print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
 			
-			
 			try:
 				userpassnr = keypadcreditbuffer[1:5]
 				dummyint = int(userpassnr)
@@ -295,19 +294,31 @@ def registra_en_drive():
 	global solesacumulados
 	global formadepago
 	global pass_user
+	global gc
 	# global worksheet2
 	
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
 	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = ["protocol: v2", device, timestamp, ("IGUA_01 - " + str(formadepago)), "passnumber:", pass_user, "colectado centavos", solesstring, "servido mililitros", mlservidosstring]
+	data = [timestamp, ("IGUA_01 - " + str(formadepago)), pass_user, solesstring, mlservidosstring]
 	# Select a range
 	
 	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-	worksheet2 = sheet.get_worksheet(1)
-	next_row = worksheet2.cell(1, 1).value
-	cell_list = worksheet2.range('A' + str(next_row) + ':J' + str(next_row))
+	try:
+		worksheet2 = sheet.get_worksheet(1)
+	except: 
+		#recuperar la conexión con drive
+		gc = gspread.authorize(credentials)
+		# wks = gc.open("Where is the money Lebowski?").sheet1
+		sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+		try:
+			worksheet2 = sheet.get_worksheet(1)
+		except:
+			logger.error('Se perdió y no se logró recuperar atenticaciòn en gspread.')
+		
+	next_row = int(worksheet2.cell(1, 1).value)
+	cell_list = worksheet2.range('A' + str(next_row) + ':E' + str(next_row))
 	
 	looper = 0
 	for cell in cell_list:
@@ -927,11 +938,12 @@ while 1 == 1:
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		fd = open('IGUA_DANNY_log.csv','a')
 		# fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodega, volumen: ' + str(format(string_flw, '.3f')) + "\n")
-		fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodegadanny, volumen: ' + str(format(servidos_lt, '.3f')) + "\n")
+		fd.write(str(timestamp) +', IGUA_01 ' + formadepago + ',' + str(1000 * format(servidos_lt, '.3f')) + "\n")
 		fd.close()
         
         #resetea variables para nuevo ciclo
 		keypadcredit = 0
+		servidos_lt = 0
 		keypadcreditbuffer = ""
 		
 		lcd_captured_by_keypad = 0
