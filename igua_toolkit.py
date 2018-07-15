@@ -216,17 +216,26 @@ def on_press(key):
 							print('se actualizó registro de activeflag')
 						except:
 							print('no se pudo completar registro de fecha de activación')
-							print('o, no se pudo completar registro de activeflag')						
+							print('no, no se pudo completar registro de activeflag')						
 					
 					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
+					
 					pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
-						ser_lcd.write(('ooops! no hay credito disponible').encode())
+						ser_lcd.write(('sin credito disponible para hoy.').encode())
+						sleep(2)
 						lcd_captured_by_keypad = 0
+					elif pass_dia_N > 7:
+						print('este iguapass 7x1 ya venció...')
+						ser_lcd.write(('este iguapass 7x1 ya venció....').encode())
+						sleep(2)
+						lcd_captured_by_keypad = 0
+						
 					else:
 						print('se cargó crédito de hoy: ' + str(pass_credit_today))
-						ser_lcd.write(('su saldo de hoy: ' + str(pass_credit_today)).encode())
+						ser_lcd.write(('su saldo de hoy: ' + str(pass_credit_today) + ' mililitros!').encode())
+						sleep(2)
 						formadepago = 'pass-7x1'
 						process_id = 3 
 						 
@@ -293,8 +302,13 @@ def on_press(key):
 					# pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					pass_credit_today = int(pass_row[6])
 					if pass_credit_today == 0:
-						print('no hay credito disponible por hoy')
+						print('ooops. iguapass sin saldo....   ')
 						ser_lcd.write(('ooops! no hay credito disponible para hoy').encode())
+						sleep(2)
+						lcd_captured_by_keypad = 0
+					elif pass_dia_N > 30:
+						print('ooops. iguapass vencido....   ')
+						ser_lcd.write(('ooops. iguapass vencido....     ').encode())
 						sleep(2)
 						lcd_captured_by_keypad = 0
 					else:
@@ -305,7 +319,7 @@ def on_press(key):
 						formadepago = 'pass-30dias'
 						process_id = 3  
 								
-		keypadcreditbuffer = ""
+		keypadcreditbuffer = ""    #no se logró cargar iguapass alguno
 		
 	#caso que sea cualquier otra tecla, acumular cadena	
 	elif process_id==0 and key == Key.backspace:
