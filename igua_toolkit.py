@@ -150,7 +150,7 @@ def on_press(key):
 				userpassnr = keypadcreditbuffer[1:7]
 				dummyint = int(userpassnr)
 				print('userpassnr es: ' + userpassnr)
-				ser_lcd.write(('su usuario es:    ' + userpassnr).encode())
+				ser_lcd.write(('buscando...      Iguapass     ...' + userpassnr).encode())
 				
 				
 			except: 
@@ -198,7 +198,7 @@ def on_press(key):
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
 					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
-					ser_lcd.write(('codigo no reconocido').encode())
+					ser_lcd.write(('cOdigo no reconocido            ').encode())
 					# lcd_captured_by_keypad = 0
 					
 				else:
@@ -223,11 +223,11 @@ def on_press(key):
 					pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
-						ser_lcd.write(('sin credito disponible para hoy.').encode())
+						ser_lcd.write(('sin crEdito disponible para hoy.').encode())
 						sleep(2)
 						lcd_captured_by_keypad = 0
 					elif pass_dia_N > 7:
-						print('este iguapass 7x1 ya venció...')
+						print('este iguapass 7x1 ya venciO...')
 						ser_lcd.write(('este iguapass 7x1 ya venció....').encode())
 						sleep(2)
 						lcd_captured_by_keypad = 0
@@ -242,7 +242,7 @@ def on_press(key):
 			#para pases "30-dias"			
 			if process_id == 0 and userpassnr != '000000':   #para pases "30-dias"
 				print("buscando crédito en pestaña 30-dias... ")
-				ser_lcd.write(("buscando crédito pase 30-dias...").encode())
+				ser_lcd.write(("buscando crEdito Iguapass...    ").encode())
 				sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 				try: 
 					worksheet = sheet.get_worksheet(3)
@@ -263,10 +263,13 @@ def on_press(key):
 						pass_row = worksheet.row_values(passcelda.row)
 						# print('pass està en la celda: ' + str(passcelda))
 						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
-						print('Exito! se encontró igua pass 30 días')
+						print('Exito! se encontrO igua pass 30 dIas')
 					except:
 						print('no fue posible obtener registro de iguapass 30-días')
+						ser_lcd.write(("No se hallO Igua-pass : (       ").encode())
+						sleep(2)
 						pass_row = [0]
+						lcd_captured_by_keypad = 0
 					
 				except:
 					logger.error('No fue posible conectarase con google API.')
