@@ -17,6 +17,7 @@
 # pip3 install gspread (como pi para que funcione el autoarranque)
 # además hay que incluir el archivo "IGUA_DRIVE_SECRET.json"
 # además hay que hacer: pip3 install --upgrade oauth2client
+# para llo de timezone, instal'e una libreria con pip3 pytz
 
 
 # para clonar la carpeta de github a local:
@@ -73,6 +74,7 @@ from igua_display import display_servidos_lt, display_agradece
 from pynput.keyboard import Key, Listener
 
 #inicializando variables
+codigodemaquina = "IGUA_01"
 process_id = 0                  #
 last = 0.0
 running = 1
@@ -88,7 +90,7 @@ now_1 = 0
 keypadcredit = float(0.0)
 cancelrequest_timeout = 0
 keypadcreditbuffer = ''
-pass_user = '0000'
+pass_user = '000000'
 pass_credit_today = 0
 passcelda = ''
 pass_dia_N = 1000    #un nro mayor al tope de 7 o 30, se chancará
@@ -107,6 +109,8 @@ def on_press(key):
 	global formadepago
 	global worksheet
 	global lcd_captured_by_keypad
+	global credentials
+	global gc
 	
 	k = 0   #declarando indice para cadena
 	#para monitorear todas las teclas
@@ -115,7 +119,7 @@ def on_press(key):
 	
 	#caso que se haya ingresado enter
 	if key == Key.enter and process_id==0:
-		userpassnr = '0000'   #codigo por defecto
+		userpassnr = '000000'   #codigo por defecto
 		pass_row = [0,0,0]
 		keypadcredit = float(0.0)
 		print("se presionó enter")
@@ -143,7 +147,7 @@ def on_press(key):
 			print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
 			
 			try:
-				userpassnr = keypadcreditbuffer[1:5]
+				userpassnr = keypadcreditbuffer[1:7]
 				dummyint = int(userpassnr)
 				print('userpassnr es: ' + userpassnr)
 				ser_lcd.write(('su usuario es:    ' + userpassnr).encode())
@@ -153,24 +157,44 @@ def on_press(key):
 				print("el código debe contener solo caracteres numericos")
 				ser_lcd.write(('codigo no reconocido').encode())
 				# lcd_captured_by_keypad = 0
-					
-			if userpassnr != '0000':
-				print('pasó, hay un nro diferente de cero')
-				print("buscando crédito ... ")
-				try:
+            
+            
+            # para pases 7x1					
+			if userpassnr != '000000':
+				print("buscando crédito en pestaña 7x1... ")
+				ser_lcd.write(("buscando crédito ...            ").encode())
+				sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+				try: 
+					worksheet = sheet.get_worksheet(2)
+					logger.error('Se logró obtener la hoja nro. 2 ')
+					print('Se logró obtener la hoja nro. 2 ')	
+				except:
+					#recuperar la conexión con drive
+					gc = gspread.authorize(credentials)
 					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-					worksheet = sheet.get_worksheet(0)
-					passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
-					# print('pass està en la celda: ' + str(passcelda))
-					# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
-					pass_row = worksheet.row_values(passcelda.row)
-					print('exito! se encontró igua pass')
-				except: 
-					print('no fue posible obtener registro de iguapass')
-					pass_row = [0]
+					# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+					logger.error('Se intentó volver a autorizar con credenciales de google API.')
+					print('Se intentó volver a autorizar con credenciales de google API.')	
+				
+				try: 
+					worksheet = sheet.get_worksheet(2)
+					try: 
+						passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
+						pass_row = worksheet.row_values(passcelda.row)
+						# print('pass està en la celda: ' + str(passcelda))
+						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
+						print('Exito! se encontró igua pass 7x1')
+					except:
+						print('no fue posible obtener registro de iguapass 7x1')
+						pass_row = [0]
 					
+				except:
+					logger.error('No fue posible conectarase con google API.')
+					print('No fue posible conectarase con google API.')	
+					pass_row = [0]							
 		
 			if pass_row != [0]:
+				
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
 					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
@@ -203,11 +227,86 @@ def on_press(key):
 					else:
 						print('se cargó crédito de hoy: ' + str(pass_credit_today))
 						ser_lcd.write(('su saldo de hoy: ' + str(pass_credit_today)).encode())
-						formadepago = 'pass'
-						process_id = 3  
+						formadepago = 'pass-7x1'
+						process_id = 3 
+						 
+			#para pases "30-dias"			
+			if process_id == 0 and userpassnr != '000000':   #para pases "30-dias"
+				print("buscando crédito en pestaña 30-dias... ")
+				ser_lcd.write(("buscando crédito pase 30-dias...").encode())
+				sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+				try: 
+					worksheet = sheet.get_worksheet(3)
+					# logger.error('Se logró obtener la hoja nro. 3 ')
+					print('Se logró obtener la hoja nro. 3 (osea la cuarta pestaña)')	
+				except:
+					#recuperar la conexión con drive
+					gc = gspread.authorize(credentials)
+					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+					# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+					logger.error('Se intentó volver a autorizar con credenciales de google API.')
+					print('Se intentó volver a autorizar con credenciales de google API.')	
 				
+				try: 
+					worksheet = sheet.get_worksheet(3)
+					try: 
+						passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
+						pass_row = worksheet.row_values(passcelda.row)
+						# print('pass està en la celda: ' + str(passcelda))
+						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
+						print('Exito! se encontró igua pass 30 días')
+					except:
+						print('no fue posible obtener registro de iguapass 30-días')
+						pass_row = [0]
+					
+				except:
+					logger.error('No fue posible conectarase con google API.')
+					print('No fue posible conectarase con google API.')	
+					pass_row = [0]							
+		
+			if process_id == 0 and pass_row != [0]:
+				print(pass_row)
+				if len(pass_row) <2:    #descartamos que la fila esté vacía
+					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
+					ser_lcd.write(('contactar: igua.devs@gmail.com').encode())
+					sleep(2)
+					lcd_captured_by_keypad = 0
+					
+				else:
+					pass_user = pass_row[0]
+					pass_plantype = pass_row[1]
+					pass_activeflag = pass_row[2]
+					pass_activationdate = pass_row[3]
+					if pass_activeflag == '0':
+						pass_activeflag = 1
+						pass_activationdate = datetime.now().timetuple().tm_yday
+						try:
+							worksheet.update_cell(passcelda.row, 4, pass_activationdate)
+							print('se actualizó registro de fecha de activación')
+							worksheet.update_cell(passcelda.row, 3, '1')
+							print('se actualizó registro de activeflag')
+						except:
+							print('no se pudo completar registro de fecha de activación')
+							print('o, no se pudo completar registro de activeflag')						
+					
+					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
+					# pass_credit_today = int(pass_row[(6 + pass_dia_N)])
+					pass_credit_today = int(pass_row[6])
+					if pass_credit_today == 0:
+						print('no hay credito disponible por hoy')
+						ser_lcd.write(('ooops! no hay credito disponible para hoy').encode())
+						sleep(2)
+						lcd_captured_by_keypad = 0
+					else:
+						print('se cargó crédito: ' + str(pass_credit_today))
+						ser_lcd.write(('su saldo: ' + str(pass_credit_today)).encode())
+						sleep(2)
+						lcd_captured_by_keypad = 0
+						formadepago = 'pass-30dias'
+						process_id = 3  
+								
 		keypadcreditbuffer = ""
-	
+		
 	#caso que sea cualquier otra tecla, acumular cadena	
 	elif process_id==0 and key == Key.backspace:
 		keypadcreditbuffer = ""
@@ -256,14 +355,15 @@ def escribir_nuevo_saldo_para_pass():
 	global pass_dia_N
 	global pass_credit_today
 	global worksheet
-	worksheet.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
-	'''
-	try:
-		worksheet.update_cell(passcelda.row, pass_dia_N, '')
-		print('se actualizó saldo.')
-	except:
-		print('no se pudo actualizar saldo.')
-	'''
+	global formadepago
+	
+	if formadepago == 'pass-7x1':
+		worksheet = sheet.get_worksheet(2)
+		worksheet.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
+	if formadepago == 'pass-30dias':
+		worksheet = sheet.get_worksheet(3)
+		worksheet.update_cell(passcelda.row, 7, pass_credit_today)
+	
 		
 def on_release(key):
     # print('{0} release'.format(key))
@@ -274,14 +374,13 @@ def on_release(key):
     
 #fin para el keypad
 
-#para gspread (google "spreadsheets"(?) api)
+#para gspread
 try: 
 	import gspread
 	from oauth2client.service_account import ServiceAccountCredentials
 	scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 	credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
 	gc = gspread.authorize(credentials)
-	# wks = gc.open("Where is the money Lebowski?").sheet1
 	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 	worksheet = sheet.get_worksheet(0)
 
@@ -295,15 +394,22 @@ def registra_en_drive():
 	global formadepago
 	global pass_user
 	global gc
+	global credentials
 	# global worksheet2
 	
-	timestamp = int(mktime(datetime.utcnow().timetuple()))
+	 
+
+	# preprarar data
+	timestamp = int(mktime(datetime.utcnow().timetuple())) #timestampglobal utc
+	now = datetime.now(pytz.timezone('America/Lima')) #timestamplocal lima
+	# timestamplocalstring = now.strftime('%Y-%m-%d %H:%M:%S') #como string en HRF
+	timestamplocalstring_date = now.strftime('%d/%m/%Y') #la fecha como string en HRF
+	timestamplocalstring_time = now.strftime('%H:%M:%S') #la hora como string en HRF
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
-	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = [timestamp, ("IGUA_01 - " + str(formadepago)), pass_user, solesstring, mlservidosstring]
-	# Select a range
+	data = [timestamp, timestamplocalstring_date, timestamplocalstring_time, codigodemaquina, str(formadepago), pass_user, solesstring, mlservidosstring]
 	
+	# escribir data y verificar primero que haya donde escribir (drive)
 	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 	try:
 		worksheet2 = sheet.get_worksheet(1)
@@ -317,8 +423,9 @@ def registra_en_drive():
 		except:
 			logger.error('Se perdió y no se logró recuperar atenticaciòn en gspread.')
 		
-	next_row = int(worksheet2.cell(1, 1).value)
-	cell_list = worksheet2.range('A' + str(next_row) + ':E' + str(next_row))
+	next_row = int(worksheet2.cell(3, 2).value)
+	print('next row: ' + str(next_row))
+	cell_list = worksheet2.range('A' + str(next_row) + ':H' + str(next_row))
 	
 	looper = 0
 	for cell in cell_list:
@@ -326,14 +433,17 @@ def registra_en_drive():
 		looper = looper + 1
 
 
-	# Update in batch
+	# Registrando en drive en "batch" (cell_list)
 	worksheet2.update_cells(cell_list)
 	next_row = int(next_row) + 1
-	worksheet2.update_acell('A1', next_row)
+	worksheet2.update_acell('B3', next_row)
 	print(data)
 
 
 #importando funciones y librerias
+from datetime import datetime, timezone
+from datetime import datetime, timezone
+import pytz
 from time import sleep
 from time import strftime 
 import time
@@ -341,6 +451,7 @@ import serial
 import re
 import socket
 import threading
+
 
 REMOTE_SERVER = "www.google.com"
 
@@ -400,7 +511,7 @@ GPIO.setup(UV_relay, GPIO.OUT)
 #para carriots
 from urllib.request import urlopen, Request
 from time import mktime, sleep
-from datetime import datetime
+from datetime import datetime, timezone
 from json import dumps
 
 class Client (object):
@@ -430,16 +541,16 @@ def send_to_carriots():  #send collected data to carriots
 	global solesacumulados
 	global formadepago
 	global pass_user
+	global codigodemaquina
 	
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
-	#data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": "IGUA_01", "colectado soles": solesstring, "servido litros": format(servidos_lt/1000, '.3f')}}
-	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": ("IGUA_01 - " + str(formadepago)), "iguapassnr: ": pass_user, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
-	print(data)
+	data = {"protocol": "v2", "device": device, "at": timestamp, "data": {"maquina": (codigodemaquina + " - " + str(formadepago)), "iguapassnr: ": pass_user, "colectado centavos": solesstring, "servido mililitros": mlservidosstring}}
+	# print(data)
 	if is_connected() == True:
 		carriots_response = client_carriots.send(data)
-		print('conexion ok!')
+		print('conexion ok! respuesta de carriots:')
 		print(carriots_response.read())
 	else:
 		print('no connectivity available')
@@ -891,7 +1002,7 @@ while 1 == 1:
 				print ("se pasó del volumen a servir")
 				set_valve(0)
 				lcd_agradece()
-				if formadepago == "pass":
+				if formadepago == "pass-7x1" or formadepago == "pass-30dias":
 					print(' formadepago =es= pass ')
 					pass_credit_today = '0'
 					print(' remaining credit: ' + pass_credit_today)
@@ -903,7 +1014,7 @@ while 1 == 1:
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
 				lcd_agradece()
-				if formadepago == "pass":
+				if formadepago == "pass-7x1" or formadepago == "pass-30dias":
 					print(' formadepago =es= pass ')
 					pass_credit_today = pass_credit_today - int(servidos_lt)
 					print(' remaining credit: ' + str(pass_credit_today))
@@ -914,7 +1025,7 @@ while 1 == 1:
 			if cancelrequest_timeout == 1:
 				print ("se cancelo el tiempo de espera (backspace)")
 				set_valve(0)   #cerrando la valvula
-				if formadepago == "pass":
+				if formadepago == "pass-7x1" or formadepago == "pass-30dias":
 					pass_credit_today = pass_credit_today - int(servidos_lt)
 					escribir_nuevo_saldo_para_pass()
 					pass_credit_today = 0
@@ -938,7 +1049,7 @@ while 1 == 1:
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		fd = open('IGUA_DANNY_log.csv','a')
 		# fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodega, volumen: ' + str(format(string_flw, '.3f')) + "\n")
-		fd.write(str(timestamp) +', IGUA_01 ' + formadepago + ',' + str(1000 * format(servidos_lt, '.3f')) + "\n")
+		fd.write(str(timestamp) +','+ codigodemaquina + ',' + formadepago + ',' + str(servidos_lt) + "\n")
 		fd.close()
         
         #resetea variables para nuevo ciclo
