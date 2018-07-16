@@ -375,19 +375,49 @@ def escribir_nuevo_saldo_para_pass():
 	global formadepago
 	
 	if formadepago == 'pass-7x1':
-		worksheet = sheet.get_worksheet(2)
-		worksheet.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
+		try: 
+			worksheet = sheet.get_worksheet(2)
+			print('Se logró obtener la hoja nro. 2 ')	
+		except:
+			#recuperar la conexión con drive
+			gc = gspread.authorize(credentials)
+			sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+			# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+			logger.error('Se intentó volver a autorizar con credenciales de google API.')
+			print('Se intentó volver a autorizar con credenciales de google API.')	
+		try: 
+			worksheet = sheet.get_worksheet(2)
+			print('Se logró autorizar con credenciales de google API.')	
+			worksheet.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
+			print('Se logró actualizar saldo del día.')	
+		except:
+			print('No se logró actualizar saldo del pass-7x1.')		
+			
 	if formadepago == 'pass-30dias':
-		worksheet = sheet.get_worksheet(3)
-		worksheet.update_cell(passcelda.row, 7, pass_credit_today)
-	
+		try: 
+			worksheet = sheet.get_worksheet(3)
+			print('Se logró obtener la hoja nro. 3 ')	
+		except:
+			#recuperar la conexión con drive
+			gc = gspread.authorize(credentials)
+			sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+			# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+			logger.error('Se intentó volver a autorizar con credenciales de google API.')
+			print('Se intentó volver a autorizar con credenciales de google API.')	
+		try: 
+			worksheet = sheet.get_worksheet(3)
+			print('Se logró autorizar con credenciales de google API.')	
+			worksheet.update_cell(passcelda.row, 7, pass_credit_today)
+			print('Se logró actualizar saldo del pass-30dias.')	
+		except:
+			print('No se logró actualizar saldo del pass-30dias.')	
 		
 def on_release(key):
     # print('{0} release'.format(key))
     # if key == Key.esc:
         # Stopstener
     #    return False
-    sleep(0)
+    pass
     
 #fin para el keypad
 
