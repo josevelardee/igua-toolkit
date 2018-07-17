@@ -162,7 +162,7 @@ def on_press(key):
             # para pases 7x1					
 			if userpassnr != '000000':
 				print("buscando crédito en pestaña 7x1... ")
-				ser_lcd.write(("buscando crédito ...            ").encode())
+				ser_lcd.write(("buscando crEdito ...            ").encode())
 				sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 				try: 
 					worksheet = sheet.get_worksheet(2)
