@@ -138,8 +138,8 @@ def on_press(key):
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
-	'''OJO'''  	lcd_string('se cargó soles:  S/' + str(keypadcredit))
-				# ser_lcd.write(('se cargó soles:  S/' + str(keypadcredit)).encode())
+				# lcd_string('se cargó soles:  S/' + str(keypadcredit))  '''OJO'''  	
+				ser_lcd.write(('se cargó soles:  S/' + str(keypadcredit)).encode())
 				
 		except:   
 				print("el nro del keypad no se logró convertir a soles")
@@ -624,7 +624,7 @@ def is_connected():
 
 # declarar los puertos serialers en caso que se use máquina modo usb
 
-if modo_serial == 'usb'
+if modo_serial == 'usb':
 	try:
 		ser_acc = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
 		ser_flw =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
@@ -632,7 +632,7 @@ if modo_serial == 'usb'
 	except:
 		print('algo anda mal al declarar los puertos usb...')
 		
-if modo_serial == 'i2c'
+if modo_serial == 'i2c':
 	#acá va lo de Jose Velarde
 	pass
 
@@ -650,7 +650,7 @@ def read_flw():
 			string_flw = string_flw.lstrip('r')
 			string_flw = string_flw.strip('\n\r')
 			string_flw = string_flw.strip('\r\n')
-	elif modo_Serial == 'i2c'
+	elif modo_Serial == 'i2c':
 		#acá viene lo de Jose Velarde
 		pass
 		
@@ -677,10 +677,9 @@ def lcd_bienvenida_linear(now):
 				ser_lcd.write('agua igua!!!           salud!   '.encode())
 		elif modo_serial == 'i2c':
 			#acá va lo de Jose Velarde
+			pass
 		else:
 			pass
-			
-	return 1
 
 def lcd_bienvenida_pwyw(now):
 	global lcd_captured_by_keypad
@@ -702,6 +701,7 @@ def lcd_bienvenida_pwyw(now):
 		
 		elif modo_serial == 'i2c':
 			#acá va lo de Jose Velarde
+			pass
 		else:
 			pass
 	
@@ -714,6 +714,7 @@ def lcd_acumula_linear(solesacumulados):
 		ser_lcd.write(('tienes: S/ ' + str(format(solesacumulados, '.2f')) + '                 ').encode())
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 	
@@ -723,6 +724,7 @@ def lcd_acumula_pwyw(solesacumulados):
 		ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f')) + '             ').encode())	
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 	
@@ -732,12 +734,13 @@ def lcd_servidos_lt(servidos_lt,diff):
 	button_state = GPIO.input(button)
 	global modo_serial
 	if modo_serial == 'usb':
-				if button_state == GPIO.LOW:
+		if button_state == GPIO.LOW:
 			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())	
 		if button_state == GPIO.HIGH:
 			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 		
@@ -749,6 +752,7 @@ def lcd_ozonizando():
 		ser_lcd.write('... ozonizando ...              '.encode())	
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 	
@@ -759,6 +763,7 @@ def lcd_cancelando():
 		ser_lcd.write('..gracias! ...       #tomaigua !'.encode())	
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 
@@ -768,6 +773,7 @@ def lcd_agradece():
 		ser_lcd.write('... gracias !!!                 '.encode())	
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 		
@@ -777,6 +783,7 @@ def lcd_string(cadena):
 		ser_lcd.write(cadena.encode())
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
+		pass
 	else:
 		pass
 
@@ -974,7 +981,7 @@ while 1 == 1:
 		before = int(time.time())    #se necesita esto aqui?
 		if modo_serial == 'usb':
 			bytesToRead = ser_acc.inWaiting()
-		elif modo_serial == 'i2c'
+		elif modo_serial == 'i2c':
 			#aca viene lo de Jose Velarde
 			pass
 			
@@ -1005,7 +1012,7 @@ while 1 == 1:
 		secondcycle = 0   #variable que inicializa el pid2
 		if modo_serial == 'usb':
 			bytesToRead = ser_acc.inWaiting()
-		elif modo_serial == 'i2c'
+		elif modo_serial == 'i2c':
 			#aca viene lo de Jose Velarde
 			pass
 
