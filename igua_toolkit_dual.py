@@ -163,7 +163,8 @@ def on_press(key):
 			except: 
 				print("el código debe contener solo caracteres numericos")
 				ser_lcd.write(('codigo no reconocido').encode())
-				# lcd_captured_by_keypad = 0
+				sleep(1.5)
+				lcd_captured_by_keypad = 0
             
             
             # para pases 7x1					
