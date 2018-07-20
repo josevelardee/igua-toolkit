@@ -231,7 +231,7 @@ def on_press(key):
 						
 					else:
 						print('se cargó crédito de hoy: ' + str(pass_credit_today))
-						lcd_string('su saldo de hoy: ' + str(pass_credit_today) + ' mililitros!')
+						lcd_string('su saldo de hoy:' + (str(pass_credit_today) + ' mililitros!').ljust(16))
 						sleep(2)
 						formadepago = 'pass-7x1'
 						process_id = 3 
@@ -299,7 +299,7 @@ def on_press(key):
 						lcd_captured_by_keypad = 0
 					else:
 						print('se cargó crédito: ' + str(pass_credit_today))
-						lcd_string('saldo x hoy: ' + str(pass_credit_today))
+						lcd_string('saldo en pass:  ' + str(pass_credit_today).ljust(16))
 						sleep(2)
 						lcd_captured_by_keypad = 0
 						formadepago = 'pass-30dias'
@@ -910,7 +910,7 @@ servidos_lt_old = 0
 servidos_litros_older = 0
 loopcounter = 0	
 servidos_total_old = 0
-precio = 0.5
+precio = 1.0
 formadepago = "cash"
 connection_flag = 1   #asumimos que si hay internet
 
@@ -1109,14 +1109,11 @@ while 1 == 1:
 			sleep(0.1)
 			read_flw()   #este funciona para ambos modos
 
-			# se podrìa borrar?   if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
 			servidos_lt = float(int(string_flw)/10)*0.95
 			display_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
 			lcd_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
 			sleep(0.05)
-				
-				# print("mande el comando al display")
-				
+								
 			# el boton resetea el tiempo maximo y enciende la válvula
 			button_state = GPIO.input(button)
 			if button_state == GPIO.LOW: 
@@ -1161,13 +1158,13 @@ while 1 == 1:
 					pass_credit_today = pass_credit_today - int(servidos_lt)
 					escribir_nuevo_saldo_para_pass()
 					pass_credit_today = 0
+				if formadepago == "keypad":
+					pass_credit_today = 0
 				cancelrequest_timeout = 0
 				lcd_cancelando()
 				sleep(0.1)
 				lcd_cancelando()
-				process_id = 4
-				
-				
+				process_id = 4		
 					
 
 	# deshabilita vavula y ozonizando
