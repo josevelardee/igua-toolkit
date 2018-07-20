@@ -15,8 +15,9 @@
 # python3 -m pip install Pynput
 # para conectar con google sheets:
 # pip3 install gspread (como pi para que funcione el autoarranque)
+# pip3 install --upgrade oauth2client
 # además hay que incluir el archivo "IGUA_DRIVE_SECRET.json"
-# además hay que hacer: pip3 install --upgrade oauth2client
+
 # para llo de timezone, instal'e una libreria con pip3 pytz
 
 
@@ -42,7 +43,7 @@
 # #hdmi_mode=1
 # hdmi_ignore_edid=0xa5000080
 # hdmi_group=2
-# hdmi_mode=85
+# hdmi_mode=*100077
 
 # para poder acceder remotamente con dataplicity, es necesario ejecutar
 # un comando que se obtiene al crear una nueva cuenta con dataplicity
@@ -75,6 +76,8 @@ from pynput.keyboard import Key, Listener
 
 #inicializando variables
 codigodemaquina = "IGUA_01"
+modo_serial = 'usb'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
+
 process_id = 0                  #
 last = 0.0
 running = 1
@@ -107,10 +110,14 @@ def on_press(key):
 	global passcelda
 	global pass_dia_N
 	global formadepago
-	global worksheet
+	global worksheet0
+	global worksheet1
+	global worksheet2
+	global worksheet3
 	global lcd_captured_by_keypad
 	global credentials
 	global gc
+	global sheet
 	
 	k = 0   #declarando indice para cadena
 	#para monitorear todas las teclas
@@ -128,7 +135,7 @@ def on_press(key):
 		try:
 			if float(keypadcreditbuffer) > 2.0:
 				print("valor sospechosamente alto. se descarta. ")
-				ser_lcd.write('Ingrese valor    menor a 2.00 S/'.encode())
+				lcd_string('Ingrese valor    menor a 2.00 S/')
 				print("keypadcredit resulting value: " + str(keypadcredit))
 				lcd_captured_by_keypad = 0
 			
@@ -136,12 +143,12 @@ def on_press(key):
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
-				ser_lcd.write(('se cargó soles:  S/' + str(keypadcredit)).encode())
+				lcd_string('se cargó soles:  S/' + str(keypadcredit))  	
+				
 				
 		except:   
-				print("el nro del keypad no se logró convertir a soles")
-				# ser_lcd.write(('error de digitacion. ').encode())
-				# lcd_captured_by_keypad = 0
+				print("el nro del keypad no se logró convertir a soles.... ahora veamos si hay iguapass")
+
 				
 		if keypadcreditbuffer[0:1] == "*" or keypadcreditbuffer[0:1] == "+":   #veamos si hay un código de iguapass
 			print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
@@ -150,56 +157,46 @@ def on_press(key):
 				userpassnr = keypadcreditbuffer[1:7]
 				dummyint = int(userpassnr)
 				print('userpassnr es: ' + userpassnr)
-				ser_lcd.write(('buscando...      Iguapass     ...' + userpassnr).encode())
+				lcd_string('buscando... pass ...' + userpassnr)
 				
 				
 			except: 
-				print("el código debe contener solo caracteres numericos")
-				ser_lcd.write(('codigo no reconocido').encode())
-				# lcd_captured_by_keypad = 0
+				print("el pass debe ser de la forma *NNNNNN o +NNNNNN.")
+				lcd_string('codigo de pass  ..no reconocido.')
+				sleep(1.2)
+				lcd_captured_by_keypad = 0
+				userpassnr = '000000'
+				pass_row = [0]
             
             
             # para pases 7x1					
 			if userpassnr != '000000':
 				print("buscando crédito en pestaña 7x1... ")
-				ser_lcd.write(("buscando crEdito ...            ").encode())
-				sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-				try: 
-					worksheet = sheet.get_worksheet(2)
-					logger.error('Se logró obtener la hoja nro. 2 ')
-					print('Se logró obtener la hoja nro. 2 ')	
-				except:
-					#recuperar la conexión con drive
-					gc = gspread.authorize(credentials)
-					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-					# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-					logger.error('Se intentó volver a autorizar con credenciales de google API.')
-					print('Se intentó volver a autorizar con credenciales de google API.')	
-				
-				try: 
-					worksheet = sheet.get_worksheet(2)
+				lcd_string("buscando crEdito ...            ")
+				auth_on_gspread()
+				if connection_flag == 1:
+					# worksheet2: aquí están los igua passes 7x1
 					try: 
-						passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
-						pass_row = worksheet.row_values(passcelda.row)
-						# print('pass està en la celda: ' + str(passcelda))
-						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
+						passcelda = worksheet2.find(userpassnr)
+						pass_row = worksheet2.row_values(passcelda.row)
 						print('Exito! se encontró igua pass 7x1')
 					except:
 						print('no fue posible obtener registro de iguapass 7x1')
 						pass_row = [0]
-					
-				except:
-					logger.error('No fue posible conectarase con google API.')
-					print('No fue posible conectarase con google API.')	
-					pass_row = [0]							
+						# lcd_captured_by_keypad = 0
+				else:
+					pass_row = [0]
+					print('al parecer no hay internet')
+					lcd_string('sin internet... no tenemos pases')
+					sleep(1.5)
+					lcd_captured_by_keypad = 0
 		
-			if pass_row != [0]:
-				
+			if pass_row != [0]:				
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
 					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
-					ser_lcd.write(('cOdigo no reconocido            ').encode())
-					# lcd_captured_by_keypad = 0
+					lcd_string('cOdigo no reconocido            ')
+					lcd_captured_by_keypad = 0
 					
 				else:
 					pass_user = pass_row[0]
@@ -210,9 +207,9 @@ def on_press(key):
 						pass_activeflag = 1
 						pass_activationdate = datetime.now().timetuple().tm_yday
 						try:
-							worksheet.update_cell(passcelda.row, 4, pass_activationdate)
+							worksheet2.update_cell(passcelda.row, 4, pass_activationdate)
 							print('se actualizó registro de fecha de activación')
-							worksheet.update_cell(passcelda.row, 3, '1')
+							worksheet2.update_cell(passcelda.row, 3, '1')
 							print('se actualizó registro de activeflag')
 						except:
 							print('no se pudo completar registro de fecha de activación')
@@ -223,18 +220,18 @@ def on_press(key):
 					pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
-						ser_lcd.write(('sin crEdito disponible para hoy.').encode())
-						sleep(2)
+						lcd_string('sin crEdito hoy.')
+						sleep(3)
 						lcd_captured_by_keypad = 0
 					elif pass_dia_N > 7:
 						print('este iguapass 7x1 ya venciO...')
-						ser_lcd.write(('este iguapass 7x1 ya venció....').encode())
+						lcd_string('este iguapass 7x1 ya venciO.....')
 						sleep(2)
 						lcd_captured_by_keypad = 0
 						
 					else:
 						print('se cargó crédito de hoy: ' + str(pass_credit_today))
-						ser_lcd.write(('su saldo de hoy: ' + str(pass_credit_today) + ' mililitros!').encode())
+						lcd_string('su saldo de hoy: ' + str(pass_credit_today) + ' mililitros!')
 						sleep(2)
 						formadepago = 'pass-7x1'
 						process_id = 3 
@@ -242,45 +239,31 @@ def on_press(key):
 			#para pases "30-dias"			
 			if process_id == 0 and userpassnr != '000000':   #para pases "30-dias"
 				print("buscando crédito en pestaña 30-dias... ")
-				ser_lcd.write(("buscando crEdito Iguapass...    ").encode())
-				sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-				try: 
-					worksheet = sheet.get_worksheet(3)
-					# logger.error('Se logró obtener la hoja nro. 3 ')
-					print('Se logró obtener la hoja nro. 3 (osea la cuarta pestaña)')	
-				except:
-					#recuperar la conexión con drive
-					gc = gspread.authorize(credentials)
-					sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-					# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-					logger.error('Se intentó volver a autorizar con credenciales de google API.')
-					print('Se intentó volver a autorizar con credenciales de google API.')	
-				
-				try: 
-					worksheet = sheet.get_worksheet(3)
+				lcd_string('buscando crEdito Iguapass...    ')
+				# lcd_stng('123456789012345678901234567890  ')
+				auth_on_gspread()
+				if connection_flag == 1:	
 					try: 
-						passcelda = worksheet.find(userpassnr) #Find a cell with exact string value
-						pass_row = worksheet.row_values(passcelda.row)
-						# print('pass està en la celda: ' + str(passcelda))
-						# print("Text found at R%sC%s" % (passcelda.row, passcelda.col))
+						passcelda = worksheet3.find(userpassnr) #Find a cell with exact string value
+						pass_row = worksheet3.row_values(passcelda.row)
 						print('Exito! se encontrO igua pass 30 dIas')
 					except:
 						print('no fue posible obtener registro de iguapass 30-días')
-						ser_lcd.write(("No se hallO Igua-pass : (       ").encode())
-						sleep(2)
+						lcd_string('No se hallO Igua-pass : (       ')
+						sleep(1.2)
 						pass_row = [0]
 						lcd_captured_by_keypad = 0
-					
-				except:
-					logger.error('No fue posible conectarase con google API.')
-					print('No fue posible conectarase con google API.')	
-					pass_row = [0]							
+				else:
+					pass_row = [0]
+					print('al parecer no hay internet')
+					sleep(1)
+					lcd_captured_by_keypad = 0
 		
 			if process_id == 0 and pass_row != [0]:
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
 					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
-					ser_lcd.write(('contactar: igua.devs@gmail.com').encode())
+					lcd_string('contactar: igua.devs@gmail.com')
 					sleep(2)
 					lcd_captured_by_keypad = 0
 					
@@ -293,9 +276,9 @@ def on_press(key):
 						pass_activeflag = 1
 						pass_activationdate = datetime.now().timetuple().tm_yday
 						try:
-							worksheet.update_cell(passcelda.row, 4, pass_activationdate)
+							worksheet3.update_cell(passcelda.row, 4, pass_activationdate)
 							print('se actualizó registro de fecha de activación')
-							worksheet.update_cell(passcelda.row, 3, '1')
+							worksheet3.update_cell(passcelda.row, 3, '1')
 							print('se actualizó registro de activeflag')
 						except:
 							print('no se pudo completar registro de fecha de activación')
@@ -306,17 +289,17 @@ def on_press(key):
 					pass_credit_today = int(pass_row[6])
 					if pass_credit_today == 0:
 						print('ooops. iguapass sin saldo....   ')
-						ser_lcd.write(('ooops! no hay credito disponible para hoy').encode())
+						lcd_string('ooops! no hay credito disponible para hoy')
 						sleep(2)
 						lcd_captured_by_keypad = 0
 					elif pass_dia_N > 30:
 						print('ooops. iguapass vencido....   ')
-						ser_lcd.write(('ooops. iguapass vencido....     ').encode())
+						lcd_string('ooops. iguapass vencido....     ')
 						sleep(2)
 						lcd_captured_by_keypad = 0
 					else:
 						print('se cargó crédito: ' + str(pass_credit_today))
-						ser_lcd.write(('su saldo: ' + str(pass_credit_today)).encode())
+						lcd_string('saldo x hoy: ' + str(pass_credit_today))
 						sleep(2)
 						lcd_captured_by_keypad = 0
 						formadepago = 'pass-30dias'
@@ -328,6 +311,8 @@ def on_press(key):
 	elif process_id==0 and key == Key.backspace:
 		keypadcreditbuffer = ""
 		print("se borro la cadena, ahora solo queda un string vacio como este: " + keypadcreditbuffer)
+		lcd_string("anulando...")
+		sleep(0.5)
 		lcd_captured_by_keypad = 0
 	
 	elif process_id==0:
@@ -357,7 +342,9 @@ def on_press(key):
 
 		keypadcreditbuffer = keypadcreditbuffer + str(key)[1:2]
 		print("se va acumulando la cadena: " + keypadcreditbuffer)
-		ser_lcd.write(('>>> ' + keypadcreditbuffer + '          ').encode())
+		if len(keypadcreditbuffer) > 8:
+			keypadcreditbuffer = ''
+		lcd_string(('>>> ' + keypadcreditbuffer).ljust(32))
 		
 	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
@@ -371,43 +358,24 @@ def escribir_nuevo_saldo_para_pass():
 	global passcelda
 	global pass_dia_N
 	global pass_credit_today
-	global worksheet
+	global worksheet0
+	global worksheet1
+	global worksheet2
+	global worksheet3
 	global formadepago
 	
 	if formadepago == 'pass-7x1':
+		auth_on_gspread()
 		try: 
-			worksheet = sheet.get_worksheet(2)
-			print('Se logró obtener la hoja nro. 2 ')	
-		except:
-			#recuperar la conexión con drive
-			gc = gspread.authorize(credentials)
-			sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-			# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-			logger.error('Se intentó volver a autorizar con credenciales de google API.')
-			print('Se intentó volver a autorizar con credenciales de google API.')	
-		try: 
-			worksheet = sheet.get_worksheet(2)
-			print('Se logró autorizar con credenciales de google API.')	
-			worksheet.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
+			worksheet2.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
 			print('Se logró actualizar saldo del día.')	
 		except:
 			print('No se logró actualizar saldo del pass-7x1.')		
 			
 	if formadepago == 'pass-30dias':
+		auth_on_gspread()
 		try: 
-			worksheet = sheet.get_worksheet(3)
-			print('Se logró obtener la hoja nro. 3 ')	
-		except:
-			#recuperar la conexión con drive
-			gc = gspread.authorize(credentials)
-			sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-			# wks = gc.open("Where is the money Lebowski?").sheet1sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-			logger.error('Se intentó volver a autorizar con credenciales de google API.')
-			print('Se intentó volver a autorizar con credenciales de google API.')	
-		try: 
-			worksheet = sheet.get_worksheet(3)
-			print('Se logró autorizar con credenciales de google API.')	
-			worksheet.update_cell(passcelda.row, 7, pass_credit_today)
+			worksheet3.update_cell(passcelda.row, 7, pass_credit_today)
 			print('Se logró actualizar saldo del pass-30dias.')	
 		except:
 			print('No se logró actualizar saldo del pass-30dias.')	
@@ -421,19 +389,65 @@ def on_release(key):
     
 #fin para el keypad
 
+
 #para gspread
-try: 
-	import gspread
-	from oauth2client.service_account import ServiceAccountCredentials
+ 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+def auth_on_gspread():
+	global gc
+	global worksheet0
+	global worksheet1
+	global worksheet2
+	global worksheet3
+	global connection_flag
+		
+	try:
+		sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+		worksheet0 = sheet.get_worksheet(0)
+		worksheet1 = sheet.get_worksheet(1)
+		worksheet2 = sheet.get_worksheet(2)
+		worksheet3 = sheet.get_worksheet(3)
+	except: 
+		scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+		credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
+		try:
+			gc = gspread.authorize(credentials)
+			sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
+			connection_flag = 1
+			print('bien! nos conectamos con oauth2client!')
+		except:
+			connection_flag = 0
+			print('probablemente no haya conexion a internet')
+		try:
+			worksheet0 = sheet.get_worksheet(0)
+			worksheet1 = sheet.get_worksheet(1)
+			worksheet2 = sheet.get_worksheet(2)
+			worksheet3 = sheet.get_worksheet(3)
+			print('se logró cargar las hojas de accounts_data en drive de igua.devs')
+		except:
+			print('no se logró cargar las hojas de accounts_data en drive de igua.devs')			
+			logger.error('No se logró recuperar autenticaciòn en gspread.')
+
+#inicializamos con drive
+auth_on_gspread()
+'''
+try:	
 	scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 	credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
 	gc = gspread.authorize(credentials)
 	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-	worksheet = sheet.get_worksheet(0)
+	worksheet0 = sheet.get_worksheet(0)
+	worksheet1 = sheet.get_worksheet(1)
+	worksheet2 = sheet.get_worksheet(2)
+	worksheet3 = sheet.get_worksheet(3)
 
 except:
-	logger.error('No fue posible importar librerìa *gspread*. probar con instalar: pip3 install gspread')
-	
+	logger.error('No fue posible importar librerìa *gspread*. probar con instalar: pip3 install gspread. Verificar también que se encuentra el archivo - IGUA DRIVE SECRET.json en su lugar')
+'''
+
+			
 def registra_en_drive():
 	global device
 	global servidos_lt
@@ -442,10 +456,11 @@ def registra_en_drive():
 	global pass_user
 	global gc
 	global credentials
-	# global worksheet2
+	global worksheet0
+	global worksheet1
+	global worksheet2
+	global worksheet3
 	
-	 
-
 	# preprarar data
 	timestamp = int(mktime(datetime.utcnow().timetuple())) #timestampglobal utc
 	now = datetime.now(pytz.timezone('America/Lima')) #timestamplocal lima
@@ -456,35 +471,29 @@ def registra_en_drive():
 	mlservidosstring = str(format(servidos_lt, ".0f"))
 	data = [timestamp, timestamplocalstring_date, timestamplocalstring_time, codigodemaquina, str(formadepago), pass_user, solesstring, mlservidosstring]
 	
-	# escribir data y verificar primero que haya donde escribir (drive)
-	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-	try:
-		worksheet2 = sheet.get_worksheet(1)
-	except: 
-		#recuperar la conexión con drive
-		gc = gspread.authorize(credentials)
-		# wks = gc.open("Where is the money Lebowski?").sheet1
-		sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-		try:
-			worksheet2 = sheet.get_worksheet(1)
-		except:
-			logger.error('Se perdió y no se logró recuperar atenticaciòn en gspread.')
+	# verificar primero que haya donde escribir (drive)
+	auth_on_gspread()
+	if connection_flag == 1:
+		# averiguar cual es la siguiente fila:
+		next_row = int(worksheet1.cell(3, 2).value)
+		print('next row: ' + str(next_row))
+		#indicar region a escribir
+		cell_list = worksheet1.range('A' + str(next_row) + ':H' + str(next_row))
+		#cargar la data en cell-list
+		looper = 0
+		for cell in cell_list:
+			cell.value = str(data[looper])
+			looper = looper + 1
 		
-	next_row = int(worksheet2.cell(3, 2).value)
-	print('next row: ' + str(next_row))
-	cell_list = worksheet2.range('A' + str(next_row) + ':H' + str(next_row))
-	
-	looper = 0
-	for cell in cell_list:
-		cell.value = str(data[looper])
-		looper = looper + 1
-
-
-	# Registrando en drive en "batch" (cell_list)
-	worksheet2.update_cells(cell_list)
-	next_row = int(next_row) + 1
-	worksheet2.update_acell('B3', next_row)
-	print(data)
+		# Registrando en drive en "batch" (cell_list)
+		worksheet1.update_cells(cell_list)
+		next_row = int(next_row) + 1
+		worksheet1.update_acell('B3', next_row)
+		print(data)
+	else:
+		print('no se pudo registrar venta, no hay internet. ')
+		lcd_string('sin internet... no tenemos pases')
+		sleep(1.5)
 
 
 #importando funciones y librerias
@@ -620,27 +629,37 @@ def is_connected():
     return False
 
 # declarar los puertos serialers en caso que se use máquina modo usb
-ser_acc = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
-ser_flw =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
-ser_lcd =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS)
+
+if modo_serial == 'usb':
+	try:
+		ser_acc = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
+		ser_flw =  serial.Serial('/dev/ttyACM2',9600,timeout = None)
+		ser_lcd =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS)
+	except:
+		print('algo anda mal al declarar los puertos usb...')
+		
+if modo_serial == 'i2c':
+	#acá va lo de Jose Velarde
+	pass
+
 
 
 def read_flw():
-	global ser_flw
-	global string_flw
-	bytesToRead = ser_flw.inWaiting()
-	if bytesToRead > 0:
-		sleep(0.05)
-		diff = 0
+	if modo_serial == 'usb':
+		global ser_flw
+		global string_flw
 		bytesToRead = ser_flw.inWaiting()
-		# print("bytes to read on ser_flw: ", bytesToRead)
-		string_flw = str(ser_flw.readline(),'utf-8')
-		# print("received on ser_flw: ", string_flw)
-		string_flw = string_flw.lstrip('r')
-		string_flw = string_flw.strip('\n\r')
-		string_flw = string_flw.strip('\r\n')
+		if bytesToRead > 0:
+			sleep(0.05)
+			diff = 0
+			string_flw = str(ser_flw.readline(),'utf-8')
+			string_flw = string_flw.lstrip('r')
+			string_flw = string_flw.strip('\n\r')
+			string_flw = string_flw.strip('\r\n')
+	elif modo_Serial == 'i2c':
+		#acá viene lo de Jose Velarde
+		pass
 		
-
 # setup display
 startdisplay()
 		
@@ -649,63 +668,131 @@ startdisplay()
 def lcd_bienvenida_linear(now):
 	global lcd_captured_by_keypad
 	if lcd_captured_by_keypad == 0:
-		if  now == 0:
-			ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
-		elif now == 1:
-			ser_lcd.write('cuida tu salud..y la del planeta'.encode())
-		elif now == 2:
-			ser_lcd.write('juntos contra      el plAstico!!'.encode())
-		elif now == 3:
-			ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
-		elif now == 4:
-			ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
-		elif now == 5:
-			ser_lcd.write('agua igua!!!           salud!   '.encode())
-	
-	return 1
+		if modo_serial == 'usb':
+			if  now == 0:
+				ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
+			elif now == 1:
+				ser_lcd.write('cuida tu salud..y la del planeta'.encode())
+			elif now == 2:
+				ser_lcd.write('juntos contra      el plAstico!!'.encode())
+			elif now == 3:
+				ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
+			elif now == 4:
+				ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
+			elif now == 5:
+				ser_lcd.write('agua igua!!!           salud!   '.encode())
+		elif modo_serial == 'i2c':
+			#acá va lo de Jose Velarde
+			pass
+		else:
+			pass
 
 def lcd_bienvenida_pwyw(now):
 	global lcd_captured_by_keypad
+	global modo_serial
 	if lcd_captured_by_keypad == 0:
-		if  now == 0:
-			ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
-		elif now == 1:
-			ser_lcd.write('cuida tu salud..y la del planeta'.encode())
-		elif now == 2:
-			ser_lcd.write('y la del planeta                '.encode())
-		elif now == 3:
-			ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
-		elif now == 4:
-			ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
-		elif now == 5:
-			ser_lcd.write('agua igua,      salud!          '.encode())
+		if modo_serial == 'usb':
+			if  now == 0:
+				ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
+			elif now == 1:
+				ser_lcd.write('cuida tu salud..y la del planeta'.encode())
+			elif now == 2:
+				ser_lcd.write('y la del planeta                '.encode())
+			elif now == 3:
+				ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
+			elif now == 4:
+				ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
+			elif now == 5:
+				ser_lcd.write('agua igua,      salud!          '.encode())
+		
+		elif modo_serial == 'i2c':
+			#acá va lo de Jose Velarde
+			pass
+		else:
+			pass
+	
 	
 	return 1
 
 def lcd_acumula_linear(solesacumulados):
-	ser_lcd.write(('tienes: S/ ' + str(format(solesacumulados, '.2f')) + '                 ').encode())
-	return 1
+	global modo_serial
+	if modo_serial == 'usb':
+		ser_lcd.write(('tienes: S/ ' + str(format(solesacumulados, '.2f')) + '                 ').encode())
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		pass
 	
 def lcd_acumula_pwyw(solesacumulados):
-	ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f')) + '             ').encode())	
+	global modo_serial
+	if modo_serial == 'usb':
+		ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f')) + '             ').encode())	
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		pass
+	
 		
 def lcd_servidos_lt(servidos_lt,diff):
 	global button
 	button_state = GPIO.input(button)
-	if button_state == GPIO.LOW:
-		ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())	
-	if button_state == GPIO.HIGH:
-		ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())	
+	global modo_serial
+	if modo_serial == 'usb':
+		if button_state == GPIO.LOW:
+			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())	
+		if button_state == GPIO.HIGH:
+			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		pass
+		
 	
 	
 def lcd_ozonizando():
-	ser_lcd.write('... ozonizando ...              '.encode())	
+	global modo_serial
+	if modo_serial == 'usb':
+		ser_lcd.write('... ozonizando ...              '.encode())	
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		pass
+	
 	
 def lcd_cancelando():
-	ser_lcd.write('..gracias! ...       #tomaigua !'.encode())	
+	global modo_serial
+	if modo_serial == 'usb':
+		ser_lcd.write('..gracias! ...       #tomaigua !'.encode())	
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		pass
 
 def lcd_agradece():
-	ser_lcd.write('... gracias !!!                 '.encode())	
+	global modo_serial
+	if modo_serial == 'usb':
+		ser_lcd.write('... gracias !!!                 '.encode())	
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		pass
+		
+def lcd_string(cadena):
+	global modo_serial
+	if modo_serial == 'usb':
+		ser_lcd.write(cadena.encode())
+	elif modo_serial == 'i2c':
+		#acá va lo de Jose Velarde
+		pass
+	else:
+		print('wrong modo_serial')
+		pass
 
 def inicializaGPIO():
 	set_valve(0)
@@ -827,20 +914,7 @@ def update_globalvars_psi():
 		'''
 				
 		
-def read_flw():
-	global ser_flw
-	global string_flw
-	bytesToRead = ser_flw.inWaiting()
-	if bytesToRead > 0:
-		sleep(0.05)
-		diff = 0
-		bytesToRead = ser_flw.inWaiting()
-		# print("bytes to read on ser_flw: ", bytesToRead)
-		string_flw = str(ser_flw.readline(),'utf-8')
-		# print("received on ser_flw: ", string_flw)
-		string_flw = string_flw.lstrip('r')
-		string_flw = string_flw.strip('\n\r')
-		string_flw = string_flw.strip('\r\n')
+
 		
 
 #globals		
@@ -850,7 +924,8 @@ servidos_litros_older = 0
 loopcounter = 0	
 servidos_total_old = 0
 precio = 0.5
-formadepago = "keypad"
+formadepago = "cash"
+connection_flag = 1   #asumimos que si hay internet
 
 # last_string_psi_10 = "default string"
 # last_string_psi_9 = "default string"
@@ -887,7 +962,7 @@ while 1 == 1:
 		ferrosacumulados = 0
 		now_1 = now
 		now = time.time()
-		now = int((now/4)%6)
+		now = int((now/2)%6)
 		if now != now_1:
 			if modo_maquina == 0:
 				display_bienvenida_linear(now)
@@ -912,7 +987,12 @@ while 1 == 1:
 	
     #leer aceptador de monedas
 		before = int(time.time())    #se necesita esto aqui?
-		bytesToRead = ser_acc.inWaiting()
+		if modo_serial == 'usb':
+			bytesToRead = ser_acc.inWaiting()
+		elif modo_serial == 'i2c':
+			#aca viene lo de Jose Velarde
+			pass
+			
 		if bytesToRead > 0:
 			formadepago = "cash"
 			now = int(time.time())   #se necesita esto aqui?
@@ -938,11 +1018,21 @@ while 1 == 1:
 		set_UV(0)
 		set_accepting(0)
 		secondcycle = 0   #variable que inicializa el pid2
-		bytesToRead = ser_acc.inWaiting()
+		if modo_serial == 'usb':
+			bytesToRead = ser_acc.inWaiting()
+		elif modo_serial == 'i2c':
+			#aca viene lo de Jose Velarde
+			pass
+
 		if bytesToRead > 0:
 			sleep(0.5)
-			bytesToRead = ser_acc.inWaiting()
-			string_igua = ser_acc.read(2)		
+			if modo_serial == 'usb':
+				bytesToRead = ser_acc.inWaiting()
+				string_igua = ser_acc.read(2)
+			elif modo_serial == 'i2c':
+				#acá viene lo de Jose Velarde
+				pass
+					
 			ferros = int(string_igua)
 			ferrosacumulados = ferrosacumulados + ferros
 			solesacumulados = ferrosacumulados / 10.0
@@ -997,9 +1087,13 @@ while 1 == 1:
 	# habilitada vavula y muestra litros
 	elif process_id == 3:
 		set_accepting(1)
-		ser_flw.write('a'.encode())
+		if modo_serial == 'usb':
+			ser_flw.write('a'.encode())
+		elif modo_serial == 'i2c':
+			#acá viene lo de Jose Velarde 
+			pass
 		sleep(0.1)
-		read_flw()
+		read_flw()   #este se llama para ambos modos de modoserial
 		hora_actual = int(time.time())
 		hora_de_re_inicio_servida = hora_actual
 
@@ -1020,9 +1114,13 @@ while 1 == 1:
 			hora_actual = int(time.time())
 			tiempo_desde_inicio_servida = hora_actual - hora_de_re_inicio_servida
 			
-			ser_flw.write('a'.encode())
+			if modo_serial == 'usb':
+				ser_flw.write('a'.encode())
+			elif modo_serial == 'i2c':
+				#acá viene lo de Jose Velarde 
+				pass
 			sleep(0.1)
-			read_flw()
+			read_flw()   #este funciona para ambos modos
 
 			# se podrìa borrar?   if secondcycle == 1:     #a partir de la segunda corrida, muestro la cuenta regresiva
 			servidos_lt = float(int(string_flw)/10)*0.95
@@ -1107,7 +1205,13 @@ while 1 == 1:
 		lcd_captured_by_keypad = 0
 		
 		#resetea el flujometro
-		ser_flw.write('aasdfasdf'.encode())
+		if modo_serial == 'usb':
+			ser_flw.write('aasdfasdf'.encode())
+		elif modo_serial == 'i2c':
+			#acá viene lo de Jose Velarde 
+			pass
+			
+			
 		
 		
 		#bloque de ozono 
