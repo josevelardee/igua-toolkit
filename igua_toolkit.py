@@ -432,20 +432,7 @@ def auth_on_gspread():
 
 #inicializamos con drive
 auth_on_gspread()
-'''
-try:	
-	scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-	credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
-	gc = gspread.authorize(credentials)
-	sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
-	worksheet0 = sheet.get_worksheet(0)
-	worksheet1 = sheet.get_worksheet(1)
-	worksheet2 = sheet.get_worksheet(2)
-	worksheet3 = sheet.get_worksheet(3)
 
-except:
-	logger.error('No fue posible importar librerìa *gspread*. probar con instalar: pip3 install gspread. Verificar también que se encuentra el archivo - IGUA DRIVE SECRET.json en su lugar')
-'''
 
 			
 def registra_en_drive():
