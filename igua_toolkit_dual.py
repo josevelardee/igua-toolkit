@@ -75,8 +75,8 @@ from igua_display import display_servidos_lt, display_agradece
 from pynput.keyboard import Key, Listener
 
 #inicializando variables
-codigodemaquina = "IGUA_01"
-modo_serial = 'usb'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
+codigodemaquina = "IGUA_I2C"
+modo_serial = 'i2c'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
 
 process_id = 0                  #
 last = 0.0
@@ -494,6 +494,9 @@ import re
 import socket
 import threading
 
+#importando modulos para i2c
+from smbus import SMBus
+bus = SMBus(1)
 
 REMOTE_SERVER = "www.google.com"
 
@@ -533,8 +536,13 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-button = 4				# GPIO04, pin nro 07 
-valve_relay = 17		# GPIO17, pin nro 11   
+if modo_serial == 'usb':
+        button = 4         # GPIO04, pin nro 07 
+        valve_relay = 17   # GPIO17, pin nro 11
+elif modo_serial == 'i2c':
+	button = 17         # GPIO04, pin nro 11 
+	valve_relay = 4   # GPIO17, pin nro 07 
+		  
 button2 = 27			# GPIO27, pin nro 13
 ozono = 24				# GPIO24, pin nro 18
 spritz_relay = 22		# GPIO22, pin nro 15
@@ -616,6 +624,8 @@ def is_connected():
 
 # declarar los puertos seriales o crear puertos i2c
 
+
+
 if modo_serial == 'usb':
 	try:
 		ser_acc = serial.Serial('/dev/ttyACM0',9600,timeout = 0)
@@ -626,7 +636,10 @@ if modo_serial == 'usb':
 		
 if modo_serial == 'i2c':
 	#acá va lo de Jose Velarde
-	pass
+	add_acc = 0x03 #address i2c del acceptor
+	add_rfid = 0x04 #address i2c del rfid
+	add_lcd = 0x05 #address i2c del lcd
+	add_flw = 0x06 #address i2c del flujometro  
 
 
 
@@ -642,9 +655,15 @@ def read_flw():
 			string_flw = string_flw.lstrip('r')
 			string_flw = string_flw.strip('\n\r')
 			string_flw = string_flw.strip('\r\n')
-	elif modo_Serial == 'i2c':
-		#acá viene lo de Jose Velarde
-		pass
+	elif modo_serial == 'i2c':
+		try:
+			lectura_flujo = bus.read_i2c_block_data(add_flw,0,2)
+			if lectura_flujo [1]!=255:
+				string_flw=lectura_flujo [0]+lectura_flujo [1]*128
+				print(str(lectura_flujo )+" = "+str(lectura_flujo [0]+lectura_flujo [1]*128))
+				sleep(0.1)
+		except:
+			pass
 		
 # setup display
 startdisplay()
@@ -669,6 +688,7 @@ def lcd_bienvenida_linear(now):
 				ser_lcd.write('agua igua!!!           salud!   '.encode())
 		elif modo_serial == 'i2c':
 			#acá va lo de Jose Velarde
+			write_i2c(0,0,0,0)
 			pass
 		else:
 			pass
@@ -731,7 +751,7 @@ def lcd_servidos_lt(servidos_lt,diff):
 		if button_state == GPIO.HIGH:
 			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())
 	elif modo_serial == 'i2c':
-		#acá va lo de Jose Velarde
+		write_i2c(2,0,diff,0)
 		pass
 	else:
 		pass
@@ -764,8 +784,7 @@ def lcd_agradece():
 	if modo_serial == 'usb':
 		ser_lcd.write('... gracias !!!                 '.encode())	
 	elif modo_serial == 'i2c':
-		#acá va lo de Jose Velarde
-		pass
+		write_i2c(3,0,0,0)	
 	else:
 		pass
 		
@@ -813,6 +832,14 @@ def set_accepting(valor):
 		GPIO.output(coinhibitor_relay, 1)
 	if valor == 1:
 		GPIO.output(coinhibitor_relay, 0)
+
+def write_i2c(a,b,c,d):
+	try:
+		bus.write_i2c_block_data(add_lcd, a, [b, c, d])
+	except:
+		pass
+	sleep(0.1)
+	return -1
 
 '''
 def read_tds():
@@ -980,6 +1007,7 @@ while 1 == 1:
 			bytesToRead = ser_acc.inWaiting()
 		elif modo_serial == 'i2c':
 			#aca viene lo de Jose Velarde
+			bytesToRead = 0
 			pass
 			
 		if bytesToRead > 0:
@@ -1194,7 +1222,8 @@ while 1 == 1:
 		if modo_serial == 'usb':
 			ser_flw.write('aasdfasdf'.encode())
 		elif modo_serial == 'i2c':
-			#acá viene lo de Jose Velarde 
+			#acá viene lo de Jose Velarde
+			bus.write_byte(add_flw, 1)
 			pass
 			
 			
