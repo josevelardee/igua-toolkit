@@ -112,7 +112,10 @@ lcd_captured_by_keypad = 0
 # para el keypad
 def on_press(key):
 	
-	os.system('mpg123 -q iguino_sounds/_iguino_beep2.mp3 &')
+	try:
+		os.system('mpg123 -q iguino_sounds/_iguino_beep2.mp3 &')
+	except:
+		pass
 	
 	global cancelrequest_timeout
 	global keypadcredit
@@ -1029,7 +1032,10 @@ while 1 == 1:
 			
 		if bytesToRead > 0:
 			formadepago = "cash"
-			os.system('mpg123 -q iguino_sounds/_iguino_beep3.mp3 &')
+			try:
+				os.system('mpg123 -q iguino_sounds/_iguino_beep3.mp3 &')
+			except:
+				print('no se puedo reproducir audio de moneda')	
 			now = int(time.time())   #se necesita esto aqui?
 			process_id = 1
 			
