@@ -343,7 +343,8 @@ def on_press(key):
 		print("se va acumulando la cadena: " + keypadcreditbuffer)
 		if len(keypadcreditbuffer) > 8:
 			keypadcreditbuffer = ''
-		lcd_string(('>>> ' + keypadcreditbuffer).ljust(32))
+		if modo_serial == 'usb':
+			lcd_string(('>>> ' + keypadcreditbuffer).ljust(32))
 		
 	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
@@ -644,6 +645,7 @@ if modo_serial == 'i2c':
 
 
 def read_flw():
+	global modo_serial
 	if modo_serial == 'usb':
 		global ser_flw
 		global string_flw
@@ -672,28 +674,29 @@ startdisplay()
 #para lcd
 def lcd_bienvenida_linear(now):
 	global lcd_captured_by_keypad
+	global modo_serial
 	if lcd_captured_by_keypad == 0:
-		if modo_serial == 'usb':
-			if  now == 0:
-				ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
-			elif now == 1:
-				ser_lcd.write('cuida tu salud..y la del planeta'.encode())
-			elif now == 2:
-				ser_lcd.write('juntos contra      el plAstico!!'.encode())
-			elif now == 3:
-				ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
-			elif now == 4:
-				ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
-			elif now == 5:
-				ser_lcd.write('agua igua!!!           salud!   '.encode())
-		elif modo_serial == 'i2c':
+		if modo_serial == 'usb' and now == 0:
+			ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
+		if modo_serial == 'usb' and now == 1:
+			ser_lcd.write('cuida tu salud..y la del planeta'.encode())
+		if modo_serial == 'usb' and now == 2:
+			ser_lcd.write('juntos contra      el plAstico!!'.encode())
+		if modo_serial == 'usb' and now == 3:
+			ser_lcd.write('f/aguaigua      http://igua.pe  '.encode())
+		if modo_serial == 'usb' and now == 4:
+			ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
+		if modo_serial == 'usb' and now == 5:
+			ser_lcd.write('agua igua!!!           salud!   '.encode())
+		
+		if modo_serial == 'i2c':
 			#acá va lo de Jose Velarde
 			write_i2c(0,0,0,0)
-			pass
-		else:
-			pass
+	else:
+		pass
 
 def lcd_bienvenida_pwyw(now):
+	### revisar bien esto... se ha roto !
 	global lcd_captured_by_keypad
 	global modo_serial
 	if lcd_captured_by_keypad == 0:
