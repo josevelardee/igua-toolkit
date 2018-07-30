@@ -11,16 +11,23 @@
 # ¿Cómo preparar una máquina IGUA?
 
 # se necesita instalar librerìas de pyhton:
+
 # para leer el teclado en background:
 # python3 -m pip install Pynput
+#
 # para conectar con google sheets:
 # pip3 install gspread (como pi para que funcione el autoarranque)
 # pip3 install --upgrade oauth2client
-# además hay que incluir el archivo "IGUA_DRIVE_SECRET.json"
-
-# para llo de timezone, instal'e una libreria con pip3 pytz
-
-
+#
+# para manejar la hora sin rolos 
+# pip3 install pytz
+#
+# además hay que incluir el archivo "IGUA_DRIVE_SECRET.json" dos veces:
+# una vez en la carpeta  ~/ y otra vez en la carpeta igua-toolkit 
+#
+# en raspi-config:
+# i2c habilitado, vnc habilitado, ssh habilitado
+# 
 # para clonar la carpeta de github a local:
 # git clone http://github.com/kikomayorga/igua_toolkit/
 
@@ -34,7 +41,7 @@
 # vamos a este folder: ~/.config/lxsession/LXDE-pi/
 # y alli pegamos y sobreescribimos con el archivo autostart que viene 
 # en el folder igua-toolkit
-
+#
 # para poder entrar mejor con VNC, (resolucion por defecto es ridicula)
 # modificamos estas líneas en config.txt:
 # (basado en: https://www.youtube.com/watch?v=LlXx9yVfQ0k)
@@ -44,7 +51,7 @@
 # hdmi_ignore_edid=0xa5000080
 # hdmi_group=2
 # hdmi_mode=*100077
-
+# 
 # para poder acceder remotamente con dataplicity, es necesario ejecutar
 # un comando que se obtiene al crear una nueva cuenta con dataplicity
 # las cuentas dataplicity que estamos usando son igua.devs+001@gmail.com
@@ -67,16 +74,19 @@ stderr_log_handler.setFormatter(formatter)
 # logger.info('Info message')
 # logger.error('Error message')
 
-#modulos custom
+#librerias propias
 from igua_display import startdisplay, refreshdisplay 
 from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
 from igua_display import display_acumula_pwyw, display_acumula_linear
 from igua_display import display_servidos_lt, display_agradece 
+
+#librerias necesarias
 from pynput.keyboard import Key, Listener
+import os
 
 #inicializando variables
 codigodemaquina = "IGUA_I2C"
-modo_serial = 'i2c'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
+modo_serial = 'usb'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
 
 process_id = 0                  #
 last = 0.0
@@ -101,6 +111,9 @@ lcd_captured_by_keypad = 0
 
 # para el keypad
 def on_press(key):
+	
+	os.system('mpg123 -q iguino_sounds/igua_tricks1.mp3 &')
+	
 	global cancelrequest_timeout
 	global keypadcredit
 	global keypadcreditbuffer
@@ -496,8 +509,9 @@ import socket
 import threading
 
 #importando modulos para i2c
-from smbus import SMBus
-bus = SMBus(1)
+if modo_serial == 'i2c':
+	from smbus import SMBus
+	bus = SMBus(1)
 
 REMOTE_SERVER = "www.google.com"
 
@@ -794,7 +808,7 @@ def lcd_agradece():
 def lcd_string(cadena):
 	global modo_serial
 	if modo_serial == 'usb':
-		if cadena.len() > 32:
+		if len(cadena) > 32:
 			print('cadena mayor a 32 caracteres')
 		else:
 			ser_lcd.write((cadena.ljust(32)).encode())
