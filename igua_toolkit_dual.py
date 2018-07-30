@@ -112,7 +112,7 @@ lcd_captured_by_keypad = 0
 # para el keypad
 def on_press(key):
 	
-	os.system('mpg123 -q iguino_sounds/igua_tricks1.mp3 &')
+	os.system('mpg123 -q iguino_sounds/_iguino_beep2.mp3 &')
 	
 	global cancelrequest_timeout
 	global keypadcredit
@@ -1029,6 +1029,7 @@ while 1 == 1:
 			
 		if bytesToRead > 0:
 			formadepago = "cash"
+			os.system('mpg123 -q iguino_sounds/_iguino_beep3.mp3 &')
 			now = int(time.time())   #se necesita esto aqui?
 			process_id = 1
 			
@@ -1120,6 +1121,7 @@ while 1 == 1:
 	
 	# habilitada vavula y muestra litros
 	elif process_id == 3:
+		os.system('mpg123 -q iguino_sounds/_iguino_serving.mp3 &')
 		set_accepting(1)
 		if modo_serial == 'usb':
 			ser_flw.write('a'.encode())
@@ -1216,7 +1218,7 @@ while 1 == 1:
 
 	# deshabilita vavula y ozonizando
 	elif process_id == 4:
-		
+		os.system('mpg123 -q iguino_sounds/_iguino_thrills4.mp3 &')
 		#registra la transacción en la nube
 		send_to_carriots()
 		registra_en_drive()
