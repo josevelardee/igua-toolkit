@@ -113,7 +113,7 @@ lcd_captured_by_keypad = 0
 def on_press(key):
 	
 	try:
-		os.system('mpg123 -q iguino_sounds/_iguino_beep2.mp3 &')
+		os.system('mpg123 -q iguino_sounds/_iguino_keypress.mp3 &')
 	except:
 		pass
 	
@@ -1033,7 +1033,7 @@ while 1 == 1:
 		if bytesToRead > 0:
 			formadepago = "cash"
 			try:
-				os.system('mpg123 -q iguino_sounds/_iguino_beep3.mp3 &')
+				os.system('mpg123 -q iguino_sounds/_iguino_beep2.mp3 &')
 			except:
 				print('no se puedo reproducir audio de moneda')	
 			now = int(time.time())   #se necesita esto aqui?
@@ -1224,7 +1224,7 @@ while 1 == 1:
 
 	# deshabilita vavula y ozonizando
 	elif process_id == 4:
-		os.system('mpg123 -q iguino_sounds/_iguino_thrills4.mp3 &')
+		os.system('mpg123 -q iguino_sounds/_iguino_thrills_upoct.mp3 &')
 		#registra la transacción en la nube
 		send_to_carriots()
 		registra_en_drive()
