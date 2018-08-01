@@ -1,7 +1,6 @@
 #!/usr/bin/python3 import os
 
 ###########################################################
-
 #          IGUA TOOLKIT
 
 #          V0.1
@@ -19,27 +18,27 @@
 # pip3 install gspread (como pi para que funcione el autoarranque)
 # pip3 install --upgrade oauth2client
 #
-# para manejar la hora sin rolos 
+# para manejar la hora sin rolos
 # pip3 install pytz
 #
 # además hay que incluir el archivo "IGUA_DRIVE_SECRET.json" dos veces:
-# una vez en la carpeta  ~/ y otra vez en la carpeta igua-toolkit 
+# una vez en la carpeta  ~/ y otra vez en la carpeta igua-toolkit
 #
 # en raspi-config:
 # i2c habilitado, vnc habilitado, ssh habilitado
-# 
+#
 # para clonar la carpeta de github a local:
 # git clone http://github.com/kikomayorga/igua_toolkit/
 
 # usando el Nexxt, la ip de la maquina suele ser:
 # 192.168.0.100
 
-# para configurar qué redes queremos aprender u olvidar: 
+# para configurar qué redes queremos aprender u olvidar:
 # sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 
-# para hacer autostart: 
+# para hacer autostart:
 # vamos a este folder: ~/.config/lxsession/LXDE-pi/
-# y alli pegamos y sobreescribimos con el archivo autostart que viene 
+# y alli pegamos y sobreescribimos con el archivo autostart que viene
 # en el folder igua-toolkit
 #
 # para poder entrar mejor con VNC, (resolucion por defecto es ridicula)
@@ -51,7 +50,7 @@
 # hdmi_ignore_edid=0xa5000080
 # hdmi_group=2
 # hdmi_mode=*100077
-# 
+#
 # para poder acceder remotamente con dataplicity, es necesario ejecutar
 # un comando que se obtiene al crear una nueva cuenta con dataplicity
 # las cuentas dataplicity que estamos usando son igua.devs+001@gmail.com
@@ -75,10 +74,10 @@ stderr_log_handler.setFormatter(formatter)
 # logger.error('Error message')
 
 #librerias propias
-from igua_display import startdisplay, refreshdisplay 
+from igua_display import startdisplay, refreshdisplay
 from igua_display import display_bienvenida_linear, display_bienvenida_pwyw
 from igua_display import display_acumula_pwyw, display_acumula_linear
-from igua_display import display_servidos_lt, display_agradece 
+from igua_display import display_servidos_lt, display_agradece
 
 #librerias necesarias
 from pynput.keyboard import Key, Listener
@@ -86,7 +85,7 @@ import os
 
 #inicializando variables
 codigodemaquina = "IGUA_I2C"
-modo_serial = 'usb'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
+modo_serial = 'i2c'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
 
 process_id = 0                  #
 last = 0.0
@@ -111,12 +110,12 @@ lcd_captured_by_keypad = 0
 
 # para el keypad
 def on_press(key):
-	
+
 	try:
 		os.system('mpg123 -q iguino_sounds/_iguino_keypress.mp3 &')
 	except:
 		pass
-	
+
 	global cancelrequest_timeout
 	global keypadcredit
 	global keypadcreditbuffer
@@ -134,12 +133,12 @@ def on_press(key):
 	global credentials
 	global gc
 	global sheet
-	
+
 	k = 0   #declarando indice para cadena
 	#para monitorear todas las teclas
 	print('{0} pressed'.format(key))
 	lcd_captured_by_keypad = 1
-	
+
 	#caso que se haya ingresado enter
 	if key == Key.enter and process_id==0:
 		userpassnr = '000000'   #codigo por defecto
@@ -154,45 +153,45 @@ def on_press(key):
 				lcd_string('Ingrese valor    menor a 2.00 S/')
 				print("keypadcredit resulting value: " + str(keypadcredit))
 				lcd_captured_by_keypad = 0
-			
+
 			else:
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
-				lcd_string('se cargó soles:  S/' + str(keypadcredit))  	
-				
-				
-		except:   
+				lcd_string('se cargó soles:  S/' + str(keypadcredit))
+
+
+		except:
 				print("el nro del keypad no se logró convertir a soles.... ahora veamos si hay iguapass")
 
-				
+
 		if keypadcreditbuffer[0:1] == "*" or keypadcreditbuffer[0:1] == "+":   #veamos si hay un código de iguapass
 			print("se ingresó código iguapass nro: " + keypadcreditbuffer[1:5])
-			
+
 			try:
 				userpassnr = keypadcreditbuffer[1:7]
 				dummyint = int(userpassnr)
 				print('userpassnr es: ' + userpassnr)
 				lcd_string('buscando... pass ...' + userpassnr)
-				
-				
-			except: 
+
+
+			except:
 				print("el pass debe ser de la forma *NNNNNN o +NNNNNN.")
 				lcd_string('codigo de pass  ..no reconocido.')
 				sleep(1.2)
 				lcd_captured_by_keypad = 0
 				userpassnr = '000000'
 				pass_row = [0]
-            
-            
-            # para pases 7x1					
+
+
+            # para pases 7x1
 			if userpassnr != '000000':
 				print("buscando crédito en pestaña 7x1... ")
 				lcd_string("buscando crEdito ...            ")
 				auth_on_gspread()
 				if connection_flag == 1:
 					# worksheet2: aquí están los igua passes 7x1
-					try: 
+					try:
 						passcelda = worksheet2.find(userpassnr)
 						pass_row = worksheet2.row_values(passcelda.row)
 						print('Exito! se encontró igua pass 7x1')
@@ -206,14 +205,14 @@ def on_press(key):
 					lcd_string('sin internet... no tenemos pases')
 					sleep(1.5)
 					lcd_captured_by_keypad = 0
-		
-			if pass_row != [0]:				
+
+			if pass_row != [0]:
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
 					print('cuenta sin suficientes datos. probablemente la fila de excel está vacía')
 					lcd_string('cOdigo no reconocido            ')
 					lcd_captured_by_keypad = 0
-					
+
 				else:
 					pass_user = pass_row[0]
 					pass_plantype = pass_row[1]
@@ -229,10 +228,10 @@ def on_press(key):
 							print('se actualizó registro de activeflag')
 						except:
 							print('no se pudo completar registro de fecha de activación')
-							print('no, no se pudo completar registro de activeflag')						
-					
+							print('no, no se pudo completar registro de activeflag')
+
 					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
-					
+
 					pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					if pass_credit_today == 0:
 						print('no hay credito disponible por hoy')
@@ -244,21 +243,21 @@ def on_press(key):
 						lcd_string('este iguapass 7x1 ya venciO.....')
 						sleep(2)
 						lcd_captured_by_keypad = 0
-						
+
 					else:
 						print('se cargó crédito de hoy: ' + str(pass_credit_today))
 						lcd_string('su saldo de hoy:' + (str(pass_credit_today) + ' mililitros!').ljust(16))
 						sleep(2)
 						formadepago = 'pass-7x1'
-						process_id = 3 
-						 
-			#para pases "30-dias"			
+						process_id = 3
+
+			#para pases "30-dias"
 			if process_id == 0 and userpassnr != '000000':   #para pases "30-dias"
 				print("buscando crédito en pestaña 30-dias... ")
 				lcd_string('buscando crEdito Iguapass...    ')
 				auth_on_gspread()
-				if connection_flag == 1:	
-					try: 
+				if connection_flag == 1:
+					try:
 						passcelda = worksheet3.find(userpassnr) #Find a cell with exact string value
 						pass_row = worksheet3.row_values(passcelda.row)
 						print('Exito! se encontrO igua pass 30 dIas')
@@ -273,7 +272,7 @@ def on_press(key):
 					print('al parecer no hay internet')
 					sleep(1)
 					lcd_captured_by_keypad = 0
-		
+
 			if process_id == 0 and pass_row != [0]:
 				print(pass_row)
 				if len(pass_row) <2:    #descartamos que la fila esté vacía
@@ -281,7 +280,7 @@ def on_press(key):
 					lcd_string('contactar: igua.devs@gmail.com')
 					sleep(2)
 					lcd_captured_by_keypad = 0
-					
+
 				else:
 					pass_user = pass_row[0]
 					pass_plantype = pass_row[1]
@@ -297,8 +296,8 @@ def on_press(key):
 							print('se actualizó registro de activeflag')
 						except:
 							print('no se pudo completar registro de fecha de activación')
-							print('o, no se pudo completar registro de activeflag')						
-					
+							print('o, no se pudo completar registro de activeflag')
+
 					pass_dia_N = datetime.now().timetuple().tm_yday - int(pass_activationdate)
 					# pass_credit_today = int(pass_row[(6 + pass_dia_N)])
 					pass_credit_today = int(pass_row[6])
@@ -318,20 +317,20 @@ def on_press(key):
 						sleep(2)
 						lcd_captured_by_keypad = 0
 						formadepago = 'pass-30dias'
-						process_id = 3  
-								
+						process_id = 3
+
 		keypadcreditbuffer = ""    #no se logró cargar iguapass alguno
-		
-	#caso que sea cualquier otra tecla, acumular cadena	
+
+	#caso que sea cualquier otra tecla, acumular cadena
 	elif process_id==0 and key == Key.backspace:
 		keypadcreditbuffer = ""
 		print("se borro la cadena, ahora solo queda un string vacio como este: " + keypadcreditbuffer)
 		lcd_string("anulando...")
 		sleep(0.5)
 		lcd_captured_by_keypad = 0
-	
+
 	elif process_id==0:
-		
+
 		if key == Key.end:
 			key = "'1'"
 		if key == Key.down:
@@ -347,13 +346,13 @@ def on_press(key):
 		if key == Key.home:
 			key = "'7'"
 		if key == Key.up:
-			key = "'8'"			
+			key = "'8'"
 		if key == Key.page_up:
-			key = "'9'"			
+			key = "'9'"
 		if key == Key.insert:
 			key = "'0'"
 		if key == Key.delete:
-			key = "'.'"			
+			key = "'.'"
 
 		keypadcreditbuffer = keypadcreditbuffer + str(key)[1:2]
 		print("se va acumulando la cadena: " + keypadcreditbuffer)
@@ -361,15 +360,15 @@ def on_press(key):
 			keypadcreditbuffer = ''
 		if modo_serial == 'usb':
 			lcd_string(('>>> ' + keypadcreditbuffer).ljust(32))
-		
+
 	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
 		lcd_captured_by_keypad = 0
-		cancelrequest_timeout = 1		
-	
+		cancelrequest_timeout = 1
+
 	else:
 		pass
-   
+
 def escribir_nuevo_saldo_para_pass():
 	global passcelda
 	global pass_dia_N
@@ -379,35 +378,35 @@ def escribir_nuevo_saldo_para_pass():
 	global worksheet2
 	global worksheet3
 	global formadepago
-	
+
 	if formadepago == 'pass-7x1':
 		auth_on_gspread()
-		try: 
+		try:
 			worksheet2.update_cell(passcelda.row, (pass_dia_N + 7), pass_credit_today)
-			print('Se logró actualizar saldo del día.')	
+			print('Se logró actualizar saldo del día.')
 		except:
-			print('No se logró actualizar saldo del pass-7x1.')		
-			
+			print('No se logró actualizar saldo del pass-7x1.')
+
 	if formadepago == 'pass-30dias':
 		auth_on_gspread()
-		try: 
+		try:
 			worksheet3.update_cell(passcelda.row, 7, pass_credit_today)
-			print('Se logró actualizar saldo del pass-30dias.')	
+			print('Se logró actualizar saldo del pass-30dias.')
 		except:
-			print('No se logró actualizar saldo del pass-30dias.')	
-		
+			print('No se logró actualizar saldo del pass-30dias.')
+
 def on_release(key):
     # print('{0} release'.format(key))
     # if key == Key.esc:
         # Stopstener
     #    return False
     pass
-    
+
 #fin para el keypad
 
 
 #para gspread
- 
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -418,14 +417,14 @@ def auth_on_gspread():
 	global worksheet2
 	global worksheet3
 	global connection_flag
-		
+
 	try:
 		sheet = gc.open_by_url('https://docs.google.com/spreadsheets/d/1XzZeGav7xOc-Vvhuq6aCoox_dsWTQruLx04xkl_SBbg/edit?usp=drive_web&ouid=106328115973184488048')
 		worksheet0 = sheet.get_worksheet(0)
 		worksheet1 = sheet.get_worksheet(1)
 		worksheet2 = sheet.get_worksheet(2)
 		worksheet3 = sheet.get_worksheet(3)
-	except: 
+	except:
 		scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 		credentials = ServiceAccountCredentials.from_json_keyfile_name('IGUA_DRIVE_SECRET.json', scope)
 		try:
@@ -443,14 +442,14 @@ def auth_on_gspread():
 			worksheet3 = sheet.get_worksheet(3)
 			print('se logró cargar las hojas de accounts_data en drive de igua.devs')
 		except:
-			print('no se logró cargar las hojas de accounts_data en drive de igua.devs')			
+			print('no se logró cargar las hojas de accounts_data en drive de igua.devs')
 			logger.error('No se logró recuperar autenticaciòn en gspread.')
 
 #inicializamos con drive
 auth_on_gspread()
 
 
-			
+
 def registra_en_drive():
 	global device
 	global servidos_lt
@@ -463,7 +462,7 @@ def registra_en_drive():
 	global worksheet1
 	global worksheet2
 	global worksheet3
-	
+
 	# preprarar data
 	timestamp = int(mktime(datetime.utcnow().timetuple())) #timestampglobal utc
 	now = datetime.now(pytz.timezone('America/Lima')) #timestamplocal lima
@@ -473,7 +472,7 @@ def registra_en_drive():
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
 	data = [timestamp, timestamplocalstring_date, timestamplocalstring_time, codigodemaquina, str(formadepago), pass_user, solesstring, mlservidosstring]
-	
+
 	# verificar primero que haya donde escribir (drive)
 	auth_on_gspread()
 	if connection_flag == 1:
@@ -487,7 +486,7 @@ def registra_en_drive():
 		for cell in cell_list:
 			cell.value = str(data[looper])
 			looper = looper + 1
-		
+
 		# Registrando en drive en "batch" (cell_list)
 		worksheet1.update_cells(cell_list)
 		next_row = int(next_row) + 1
@@ -504,7 +503,7 @@ from datetime import datetime, timezone
 from datetime import datetime, timezone
 import pytz
 from time import sleep
-from time import strftime 
+from time import strftime
 import time
 import serial
 import re
@@ -555,12 +554,12 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 if modo_serial == 'usb':
-        button = 4         # GPIO04, pin nro 07 
+        button = 4         # GPIO04, pin nro 07
         valve_relay = 17   # GPIO17, pin nro 11
 elif modo_serial == 'i2c':
-	button = 17         # GPIO04, pin nro 11 
-	valve_relay = 4   # GPIO17, pin nro 07 
-		  
+	button = 17         # GPIO04, pin nro 11
+	valve_relay = 4   # GPIO17, pin nro 07
+
 button2 = 27			# GPIO27, pin nro 13
 ozono = 24				# GPIO24, pin nro 18
 spritz_relay = 22		# GPIO22, pin nro 15
@@ -599,7 +598,7 @@ class Client (object):
 
     def send(self, data):
         self.data = dumps(data).encode('utf8')
-        request = Request(Client.api_url, self.data, self.headers)     
+        request = Request(Client.api_url, self.data, self.headers)
         self.response = urlopen(request)
         return self.response
 
@@ -610,7 +609,7 @@ def send_to_carriots():  #send collected data to carriots
 	global formadepago
 	global pass_user
 	global codigodemaquina
-	
+
 	timestamp = int(mktime(datetime.utcnow().timetuple()))
 	solesstring = str(format(solesacumulados*100, ".0f"))
 	mlservidosstring = str(format(servidos_lt, ".0f"))
@@ -622,13 +621,13 @@ def send_to_carriots():  #send collected data to carriots
 		print(carriots_response.read())
 	else:
 		print('no connectivity available')
-		
+
 #para carriots
-device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device  
+device = "IGUA@igua.devs.igua.devs"  # Replace with the id_developer of your device
 apikey = "8971eb3a06dd2d55a7794f6c5c0067cbd8d349a04fd67fc611dc0dec552c41ce"  # Replace with your Carriots apikey
 client_carriots = Client(apikey)
 
-	
+
 
 # funciòn que verifica conectividad
 def is_connected():
@@ -651,13 +650,13 @@ if modo_serial == 'usb':
 		ser_lcd =  serial.Serial('/dev/ttyACM1',9600,timeout = None, parity = serial.PARITY_NONE, xonxoff = False, rtscts = False, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS)
 	except:
 		print('algo anda mal al declarar los puertos usb...')
-		
+
 if modo_serial == 'i2c':
 	#acá va lo de Jose Velarde
 	add_acc = 0x03 #address i2c del acceptor
 	add_rfid = 0x04 #address i2c del rfid
 	add_lcd = 0x05 #address i2c del lcd
-	add_flw = 0x06 #address i2c del flujometro  
+	add_flw = 0x06 #address i2c del flujometro
 
 
 
@@ -683,11 +682,13 @@ def read_flw():
 				sleep(0.1)
 		except:
 			pass
-		
+
+
+
 # setup display
 startdisplay()
-		
-		
+
+
 #para lcd
 def lcd_bienvenida_linear(now):
 	global lcd_captured_by_keypad
@@ -705,7 +706,7 @@ def lcd_bienvenida_linear(now):
 			ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 		if modo_serial == 'usb' and now == 5:
 			ser_lcd.write('agua igua!!!           salud!   '.encode())
-		
+
 		if modo_serial == 'i2c':
 			#acá va lo de Jose Velarde
 			write_i2c(0,0,0,0)
@@ -730,14 +731,14 @@ def lcd_bienvenida_pwyw(now):
 				ser_lcd.write('hola mundo!!!   hola igua!!!    '.encode())
 			elif now == 5:
 				ser_lcd.write('agua igua,      salud!          '.encode())
-		
+
 		elif modo_serial == 'i2c':
 			#acá va lo de Jose Velarde
 			pass
 		else:
 			pass
-	
-	
+
+
 	return 1
 
 def lcd_acumula_linear(solesacumulados):
@@ -749,50 +750,54 @@ def lcd_acumula_linear(solesacumulados):
 		pass
 	else:
 		pass
-	
+
 def lcd_acumula_pwyw(solesacumulados):
 	global modo_serial
 	if modo_serial == 'usb':
-		ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f')) + '             ').encode())	
+		ser_lcd.write(('tu aporte: S/. ' + str(format(solesacumulados, '.2f')) + '             ').encode())
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
 		pass
 	else:
 		pass
-	
-		
+
+
 def lcd_servidos_lt(servidos_lt,diff):
 	global button
 	button_state = GPIO.input(button)
 	global modo_serial
 	if modo_serial == 'usb':
 		if button_state == GPIO.LOW:
-			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())	
+			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '                ' ).encode())
 		if button_state == GPIO.HIGH:
 			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())
 	elif modo_serial == 'i2c':
-		write_i2c(2,0,diff,0)
+		litros_p1=int(servidos_lt//100)
+		litros_p2=int(servidos_lt % 100)
+		print(litros_p1)
+		print(litros_p2)
+		write_i2c(2,litros_p1,litros_p2,diff)
 		pass
 	else:
 		pass
-		
-	
-	
+
+
+
 def lcd_ozonizando():
 	global modo_serial
 	if modo_serial == 'usb':
-		ser_lcd.write('... ozonizando ...              '.encode())	
+		ser_lcd.write('... ozonizando ...              '.encode())
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
 		pass
 	else:
 		pass
-	
-	
+
+
 def lcd_cancelando():
 	global modo_serial
 	if modo_serial == 'usb':
-		ser_lcd.write('..gracias! ...       #tomaigua !'.encode())	
+		ser_lcd.write('..gracias! ...       #tomaigua !'.encode())
 	elif modo_serial == 'i2c':
 		#acá va lo de Jose Velarde
 		pass
@@ -802,12 +807,12 @@ def lcd_cancelando():
 def lcd_agradece():
 	global modo_serial
 	if modo_serial == 'usb':
-		ser_lcd.write('... gracias !!!                 '.encode())	
+		ser_lcd.write('... gracias !!!                 '.encode())
 	elif modo_serial == 'i2c':
-		write_i2c(3,0,0,0)	
+		write_i2c(3,0,0,0)
 	else:
 		pass
-		
+
 def lcd_string(cadena):
 	global modo_serial
 	if modo_serial == 'usb':
@@ -825,8 +830,8 @@ def lcd_string(cadena):
 def inicializaGPIO():
 	set_valve(0)
 	set_UV(1)
-	set_ozono(0)	
-	
+	set_ozono(0)
+
 def set_valve(valor):
 	if valor == 0:
 		GPIO.output(valve_relay, 1)
@@ -834,19 +839,19 @@ def set_valve(valor):
 	if valor == 1:
 		GPIO.output(valve_relay, 0)
 		GPIO.output(spritz_relay, 1)
-		
+
 def set_ozono(valor):
 	if valor == 0:
 		GPIO.output(ozono, 1)
 	if valor == 1:
 		GPIO.output(ozono, 0)
-		
+
 def set_UV(valor):
 	if valor == 0:
 		GPIO.output(UV_relay, 0)
 	if valor == 1:
 		GPIO.output(UV_relay, 1)
-		
+
 def set_accepting(valor):
 	if valor == 0:
 		GPIO.output(coinhibitor_relay, 1)
@@ -854,6 +859,14 @@ def set_accepting(valor):
 		GPIO.output(coinhibitor_relay, 0)
 
 def write_i2c(a,b,c,d):
+	try:
+		bus.write_i2c_block_data(add_lcd, a, [b, c, d])
+	except:
+		pass
+	sleep(0.1)
+	return -1
+
+def write_i2c_v2(a,b,c,d):
 	try:
 		bus.write_i2c_block_data(add_lcd, a, [b, c, d])
 	except:
@@ -874,7 +887,7 @@ def read_tds():
 		print("received on ser_tds: ", string_tds)
 		string_tds = string_tds.lstrip('r')
 		string_tds = string_tds.strip('\n\r')
-		string_tds = string_tds.strip('\r\n')		
+		string_tds = string_tds.strip('\r\n')
 
 def read_psi():
 	global last_string_psi_1
@@ -889,7 +902,7 @@ def read_psi():
 	global last_string_psi_10
 	global string_psi
 	global ser_psi
-		
+
 	bytesToRead = ser_psi.inWaiting()
 	if bytesToRead > 0:
 		last_string_psi_10 = last_string_psi_9
@@ -907,12 +920,12 @@ def read_psi():
 		# print("bytes to read on ser_psi: ", bytesToRead)
 		string_psi = str(ser_psi.readline(),'utf-8')
 		# print("received on ser_psi: ", string_psi)
-	
+
 
 def clean_string_psi():
-		global string_psi	
+		global string_psi
 		global string_psi_array
-        # Entrada: 0.93 Voltios - Presion = 19.49 psi // Carbon: 0.95 Voltios - Presion = 18.12 psi // UF: 0.91 Voltios - Presion = 18.94 psi // 
+        # Entrada: 0.93 Voltios - Presion = 19.49 psi // Carbon: 0.95 Voltios - Presion = 18.12 psi // UF: 0.91 Voltios - Presion = 18.94 psi //
 
 		string_psi = string_psi.lstrip('r')
 		string_psi = string_psi.strip('\n\r')
@@ -925,9 +938,9 @@ def clean_string_psi():
 		string_psi = string_psi.replace(' Voltios - Presion = ',' ')
 		string_psi = string_psi.replace(' psi // ', ' ')
 		string_psi_array = string_psi.split(' ')
-		
-		
-def update_globalvars_psi():		
+
+
+def update_globalvars_psi():
 		global string_psi_v1
 		global string_psi_psi1
 		global string_psi_v2
@@ -948,16 +961,16 @@ def update_globalvars_psi():
 		string_psi_v3 = string_psi_array[4]
 		string_psi_psi3 = string_psi_array[5]
 		'''
-				
-		
 
-		
 
-#globals		
+
+
+
+#globals
 servidos_lt = 0
 servidos_lt_old = 0
 servidos_litros_older = 0
-loopcounter = 0	
+loopcounter = 0
 servidos_total_old = 0
 precio = 1.0
 formadepago = "cash"
@@ -982,17 +995,17 @@ diff = 0
 # string_psi_psi1 = 0
 # string_psi_v2 = 0
 # string_psi_psi2 = 0
-# string_psi_v3 = 0 
+# string_psi_v3 = 0
 # string_psi_psi3 = 0
 
 sleep(2)
-hora_de_ultimo_ozono = time.time()		
+hora_de_ultimo_ozono = time.time()
 inicializaGPIO()
 
 
-#MAIN LOOP	
+#MAIN LOOP
 while 1 == 1:
-	
+
 	if process_id == 0:  #espera monedas
 		set_accepting(0)
 		ferrosacumulados = 0
@@ -1006,7 +1019,7 @@ while 1 == 1:
 			if modo_maquina == 1:
 				display_bienvenida_pwyw(now)
 				lcd_bienvenida_pwyw(now)  # cuidado CUIDADO!!!! no existe declaración!
-				
+
 		ahora = time.time()
 		# print(ahora - hora_de_ultimo_ozono)
 		if (ahora - hora_de_ultimo_ozono) > 10:  #cada 20 minutos
@@ -1020,7 +1033,7 @@ while 1 == 1:
 			hora_de_ultimo_ozono = time.time()
 			print('estamos listos!')
 
-	
+
     #leer aceptador de monedas
 		before = int(time.time())    #se necesita esto aqui?
 		if modo_serial == 'usb':
@@ -1029,20 +1042,34 @@ while 1 == 1:
 			#aca viene lo de Jose Velarde
 			bytesToRead = 0
 			pass
-			
+    #leer rfid
+		if modo_serial == 'usb':
+			pass
+		elif modo_serial == 'i2c':
+			try:
+				rfid_id = bus.read_i2c_block_data(0x04,0,4)
+			except:
+				pass
+
+
 		if bytesToRead > 0:
 			formadepago = "cash"
 			try:
 				os.system('mpg123 -q iguino_sounds/_iguino_beep2.mp3 &')
 			except:
-				print('no se puedo reproducir audio de moneda')	
+				print('no se puedo reproducir audio de moneda')
 			now = int(time.time())   #se necesita esto aqui?
 			process_id = 1
-			
+
+
+		if (rfid_id[0]>0):
+			print(rfid_id[0])
+
+
 		if keypadcredit > 0.0:
 			formadepago = "keypad"
 			solesacumulados = keypadcredit
-			before = int(time.time())  #se necesita esto?			
+			before = int(time.time())  #se necesita esto?
 			if modo_maquina == 0:
 				display_acumula_linear(solesacumulados)
 				lcd_acumula_linear(solesacumulados)
@@ -1052,8 +1079,8 @@ while 1 == 1:
 				lcd_acumula_pwyw(solesacumulados)
 				sleep(1)
 			process_id = 2;
-			
-			
+
+
 	#aceptando monedas
 	elif process_id == 1:
 		set_UV(0)
@@ -1073,22 +1100,22 @@ while 1 == 1:
 			elif modo_serial == 'i2c':
 				#acá viene lo de Jose Velarde
 				pass
-					
+
 			ferros = int(string_igua)
 			ferrosacumulados = ferrosacumulados + ferros
 			solesacumulados = ferrosacumulados / 10.0
-			before = int(time.time()) 
-			
+			before = int(time.time())
+
 			if modo_maquina == 0:
 				display_acumula_linear(solesacumulados)
 				lcd_acumula_linear(solesacumulados)
 			if modo_maquina == 1:
 				display_acumula_pwyw(solesacumulados)
 				lcd_acumula_pwyw(solesacumulados)
-		
-		
-		
-		#TIMEOUT 
+
+
+
+		#TIMEOUT
 		now = int(time.time())
 		diff = now - before
 		#print("diff vale:", cuenta_de_ciclos)
@@ -1099,22 +1126,22 @@ while 1 == 1:
 		if (button_state == GPIO.LOW) or (diff > 200):
 			diff = 0
 			#print ("switching to PID2")
-			time.sleep(0.5)	
+			time.sleep(0.5)
 			diff = 0
 			before = int(time.time())
 			process_id = 2
 			latch = 1
 			servidos_lt = 0
-			
+
 			servidos_total = 0
-			counter_al_inicio = 0		           
+			counter_al_inicio = 0
 			secondcycle = 0
 			process_id = 2
 		else:
 			process_id = 1
-			# print ("button is NOT PRESSED")	
-		
-	elif process_id == 2:	
+			# print ("button is NOT PRESSED")
+
+	elif process_id == 2:
 		# enciende el pin de Ozono
 		set_ozono(0)
 		# muestra display "OZONIZANDO"
@@ -1124,7 +1151,7 @@ while 1 == 1:
 		set_ozono(0)
 		# apaga el pin de Ozono
 		process_id = 3
-	
+
 	# habilitada vavula y muestra litros
 	elif process_id == 3:
 		os.system('mpg123 -q iguino_sounds/_iguino_serving.mp3 &')
@@ -1132,34 +1159,34 @@ while 1 == 1:
 		if modo_serial == 'usb':
 			ser_flw.write('a'.encode())
 		elif modo_serial == 'i2c':
-			#acá viene lo de Jose Velarde 
+			#acá viene lo de Jose Velarde
 			pass
 		sleep(0.1)
 		read_flw()   #este se llama para ambos modos de modoserial
 		hora_actual = int(time.time())
 		hora_de_re_inicio_servida = hora_actual
 
-						
+
 		if modo_maquina == 0:
 			if pass_credit_today != 0:
 				litros_servir = int(pass_credit_today)
 			else:
-				litros_servir = 1000 * (solesacumulados / precio) 
-		
+				litros_servir = 1000 * (solesacumulados / precio)
+
 		# modo pay what you want
 		if modo_maquina == 1:
 			litros_servir = 1000
-		
+
 		while process_id == 3:
 
 			#verifica timeout
 			hora_actual = int(time.time())
 			tiempo_desde_inicio_servida = hora_actual - hora_de_re_inicio_servida
-			
+
 			if modo_serial == 'usb':
 				ser_flw.write('a'.encode())
 			elif modo_serial == 'i2c':
-				#acá viene lo de Jose Velarde 
+				#acá viene lo de Jose Velarde
 				pass
 			sleep(0.1)
 			read_flw()   #este funciona para ambos modos
@@ -1168,15 +1195,15 @@ while 1 == 1:
 			display_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
 			lcd_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
 			sleep(0.05)
-								
+
 			# el boton resetea el tiempo maximo y enciende la válvula
 			button_state = GPIO.input(button)
-			if button_state == GPIO.LOW: 
+			if button_state == GPIO.LOW:
 				hora_de_re_inicio_servida = int(time.time())
 				# print ("button is LOW - OR PRESSED")
 				# time.sleep(0.05)
 				set_valve(1)
-				
+
 			# el boton libre cierra la valvula
 			if button_state == GPIO.HIGH:
 				set_valve(0)
@@ -1193,8 +1220,8 @@ while 1 == 1:
 					escribir_nuevo_saldo_para_pass()
 					pass_credit_today = 0
 				process_id = 4
-					
-			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en 0.0.2 re-servir		
+
+			if tiempo_desde_inicio_servida > 30:     #si se demora mucho en 0.0.2 re-servir
 				print ("se acabó el tiempo_desde_inicio_de_servida")
 				set_valve(0)   #cerrando la valvula
 				lcd_agradece()
@@ -1205,7 +1232,7 @@ while 1 == 1:
 					escribir_nuevo_saldo_para_pass()
 					pass_credit_today = 0            #una vez transferido el saldo a la db, borramos el credito local
 				process_id = 4
-				
+
 			if cancelrequest_timeout == 1:
 				print ("se cancelo el tiempo de espera (backspace)")
 				set_valve(0)   #cerrando la valvula
@@ -1219,8 +1246,8 @@ while 1 == 1:
 				lcd_cancelando()
 				sleep(0.1)
 				lcd_cancelando()
-				process_id = 4		
-					
+				process_id = 4
+
 
 	# deshabilita vavula y ozonizando
 	elif process_id == 4:
@@ -1228,21 +1255,21 @@ while 1 == 1:
 		#registra la transacción en la nube
 		send_to_carriots()
 		registra_en_drive()
-        
+
         #anexa al archivo en local
 		timestamp = int(mktime(datetime.utcnow().timetuple()))
 		fd = open('IGUA_DANNY_log.csv','a')
 		# fd.write('timestamp: ' + str(timestamp) +', máquina: igua_bodega, volumen: ' + str(format(string_flw, '.3f')) + "\n")
 		fd.write(str(timestamp) +','+ codigodemaquina + ',' + formadepago + ',' + str(servidos_lt) + "\n")
 		fd.close()
-        
+
         #resetea variables para nuevo ciclo
 		keypadcredit = 0
 		servidos_lt = 0
 		keypadcreditbuffer = ""
-		
+
 		lcd_captured_by_keypad = 0
-		
+
 		#resetea el flujometro
 		if modo_serial == 'usb':
 			ser_flw.write('aasdfasdf'.encode())
@@ -1250,20 +1277,20 @@ while 1 == 1:
 			#acá viene lo de Jose Velarde
 			bus.write_byte(add_flw, 1)
 			pass
-			
-			
-		
-		
-		#bloque de ozono 
-		
-		# set_ozono(1)		
+
+
+
+
+		#bloque de ozono
+
+		# set_ozono(1)
 		# muestra display "OZONIZANDO"
 		# lcd_ozonizando()
 		# espera N segs
 		# sleep(10)
 		# set_ozono(0)
-		
-		before = int(time.time()) 		
+
+		before = int(time.time())
 		while process_id==4:
 			now = int(time.time())
 			diff = now - before
@@ -1271,5 +1298,5 @@ while 1 == 1:
 				set_UV(1)
 				process_id = 0
 				#   apagar ozono
-	
-	
+
+
