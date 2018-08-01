@@ -46,7 +46,10 @@ int x = 0;
 int flag=0;
 int suma= 0;
 int saldo=0;
-int litros=0;
+int litros_p1=0;
+int litros_p2=0;
+int dis_l1=0;
+int dis_l2=0;
 int segundos=0;
 const unsigned char rook_bitmap[] PROGMEM = {
 
@@ -165,15 +168,23 @@ void u8g_Tela2() //Tela 2 - Moldura e relógio
    
 void u8g_Tela3() //Tela 3 - Caracteres Ascii - Pag. 1  
 {
+  dis_l2=(litros_p1%10)*100+litros_p2;
+  dis_l1=litros_p1/10;
+  
   u8g.setFont(u8g_font_unifont);  
   u8g.drawStr( 11, 20, "Quedan:");  
-  u8g.setPrintPos(80, 20);
-  u8g.drawStr( 100, 20, "seg");  
-  u8g.print(litros);
+  u8g.setPrintPos(66, 20);
+  u8g.print(dis_l1);
+  u8g.drawStr( 72, 20, ".");  
+  u8g.setPrintPos(78, 20);
+  u8g.print(dis_l2);
+  u8g.drawStr( 102, 20, "L");  
+
   u8g.drawStr( 0, 40, "Aun tienes:");  
   u8g.setPrintPos(90, 40);
-  u8g.drawStr( 110, 40, "L");  
-  u8g.print(segundos);
+    u8g.print(segundos);
+  u8g.drawStr( 110, 40, "s");  
+
 }  
    
 void u8g_Tela4()  //Tela 3 - Caracteres Ascii - Pag. 2  
@@ -295,9 +306,9 @@ void loop()
 
       else if(data[0]==2){
      Serial.println("3");
-     litros=data[1];
-     segundos=data[2];
-          Serial.println(litros);
+     litros_p1=data[1];
+     litros_p2=data[2];
+     segundos=data[3];
     display=3;
      delay(100);
      x=0;
