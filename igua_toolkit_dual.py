@@ -554,25 +554,33 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 if modo_serial == 'usb':
-        button = 4         # GPIO04, pin nro 07
-        valve_relay = 17   # GPIO17, pin nro 11
+	button = 4         # GPIO04, pin nro 07
+	valve_relay = 17   # GPIO17, pin nro 11
+	spritz_relay = 22	# GPIO22, pin nro 15        
+	button2 = 27			# GPIO27, pin nro 13
+	ozono = 24				# GPIO24, pin nro 18
+	coinhibitor_relay = 23	# GPIO23, pin nro 16
+	UV_relay = 18			# GPIO18, pin nro 12
+
 elif modo_serial == 'i2c':
-	button = 17         # GPIO04, pin nro 11
-	valve_relay = 4   # GPIO17, pin nro 07
-
-button2 = 27			# GPIO27, pin nro 13
-ozono = 24				# GPIO24, pin nro 18
-spritz_relay = 22		# GPIO22, pin nro 15
-coinhibitor_relay = 23	# GPIO23, pin nro 16
-UV_relay = 18			# GPIO18, pin nro 12
-
+	button = 27         # GPIO04, pin nro 11
+	button2 = 10
+	button_light= 22
+	valve_relay = 4
+	spritz_relay = 17
+	ozono = 9				# GPIO24, pin nro 18
+	coinhibitor_relay = 23	# GPIO23, pin nro 16
+	UV_relay = 24			# GPIO18, pin nro 12
+	   
 GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
+GPIO.setup(button2, GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(button2, GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(valve_relay, GPIO.OUT)
 GPIO.setup(ozono, GPIO.OUT)
 GPIO.setup(spritz_relay, GPIO.OUT)
 GPIO.setup(coinhibitor_relay, GPIO.OUT)
 GPIO.setup(UV_relay, GPIO.OUT)
+GPIO.setup(button_light, GPIO.OUT)
 
 
 #para carriots
@@ -836,9 +844,11 @@ def set_valve(valor):
 	if valor == 0:
 		GPIO.output(valve_relay, 1)
 		GPIO.output(spritz_relay, 0)
+		GPIO.output(button_light, 0)
 	if valor == 1:
 		GPIO.output(valve_relay, 0)
 		GPIO.output(spritz_relay, 1)
+		GPIO.output(button_light, 1)
 
 def set_ozono(valor):
 	if valor == 0:
@@ -1062,9 +1072,9 @@ while 1 == 1:
 			process_id = 1
 
 
-		if (rfid_id[0]>0):
-			print(rfid_id[0])
-
+		if modo_serial == 'i2c':
+			if (rfid_id[0]>0):
+				print('primer digito del id:' + str(rfid_id[0]))
 
 		if keypadcredit > 0.0:
 			formadepago = "keypad"
