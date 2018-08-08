@@ -84,8 +84,8 @@ from pynput.keyboard import Key, Listener
 import os
 
 #inicializando variables
-codigodemaquina = "IGUA_I2C"
-modo_serial = 'i2c'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
+codigodemaquina = "IGUA_USB_001_MAC"
+modo_serial = 'usb'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
 
 process_id = 0                  #
 last = 0.0
@@ -580,7 +580,8 @@ GPIO.setup(ozono, GPIO.OUT)
 GPIO.setup(spritz_relay, GPIO.OUT)
 GPIO.setup(coinhibitor_relay, GPIO.OUT)
 GPIO.setup(UV_relay, GPIO.OUT)
-GPIO.setup(button_light, GPIO.OUT)
+if modo_serial == 'i2c':
+	GPIO.setup(button_light, GPIO.OUT)
 
 
 #para carriots
@@ -844,11 +845,13 @@ def set_valve(valor):
 	if valor == 0:
 		GPIO.output(valve_relay, 1)
 		GPIO.output(spritz_relay, 0)
-		GPIO.output(button_light, 0)
+		if modo_serial == 'i2c':
+			GPIO.output(button_light, 0)
 	if valor == 1:
 		GPIO.output(valve_relay, 0)
 		GPIO.output(spritz_relay, 1)
-		GPIO.output(button_light, 1)
+		if modo_serial == 'i2c':
+			GPIO.output(button_light, 1)
 
 def set_ozono(valor):
 	if valor == 0:
