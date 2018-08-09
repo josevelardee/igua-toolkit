@@ -56,6 +56,11 @@
 # las cuentas dataplicity que estamos usando son igua.devs+001@gmail.com
 # donde 001 es para la maquina de dani, 002 es para la 2da azul
 
+# para instalar USB de telefonica: ZTE MF 626 HSDPA
+# instruccciones en: 
+# http://myhowtosandprojects.blogspot.com/2013/12/how-to-setup-usb-3g-modem-linux.html
+
+
 ###########################################################
 
 # instalando un logger
