@@ -89,8 +89,8 @@ from pynput.keyboard import Key, Listener
 import os
 
 #inicializando variables
-codigodemaquina = "IGUA_USB_001_MAC"
-modo_serial = 'usb'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
+codigodemaquina = "IGUA_I2C_001"
+modo_serial = 'i2c'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
 
 process_id = 0                  #
 last = 0.0
@@ -102,6 +102,7 @@ modo_maquina = 0  				# 1: pay what you want , 0: linear mode
 button_state = 0
 now = 0
 now_1 = 0
+rfid_id = 0
 
 #globales del keypad
 keypadcredit = float(0.0)
@@ -155,7 +156,7 @@ def on_press(key):
 		try:
 			if float(keypadcreditbuffer) > 2.0:
 				print("valor sospechosamente alto. se descarta. ")
-				lcd_string('Ingrese valor    menor a 2.00 S/')
+				lcd_string('Ingrese valor     menor a 2.00 S/')
 				print("keypadcredit resulting value: " + str(keypadcredit))
 				lcd_captured_by_keypad = 0
 
@@ -163,7 +164,7 @@ def on_press(key):
 				keypadcredit = float(keypadcreditbuffer)
 				print("se convirtio el valor de teclado en float.")
 				print("keypadcredit verified value: " + str(keypadcredit))
-				lcd_string('se cargó soles:  S/' + str(keypadcredit))
+				lcd_string('se cargó soles  S/' + str(keypadcredit))
 
 
 		except:
@@ -365,6 +366,9 @@ def on_press(key):
 			keypadcreditbuffer = ''
 		if modo_serial == 'usb':
 			lcd_string(('>>> ' + keypadcreditbuffer).ljust(32))
+		elif modo_serial == 'i2c':
+			lcd_string(('>>> ' + keypadcreditbuffer))
+			sleep(0.5)
 
 	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
@@ -692,8 +696,8 @@ def read_flw():
 			lectura_flujo = bus.read_i2c_block_data(add_flw,0,2)
 			if lectura_flujo [1]!=255:
 				string_flw=lectura_flujo [0]+lectura_flujo [1]*128
-				print(str(lectura_flujo )+" = "+str(lectura_flujo [0]+lectura_flujo [1]*128))
-				sleep(0.1)
+				#print(str(lectura_flujo )+" = "+str(lectura_flujo [0]+lectura_flujo [1]*128))
+				sleep(0.01)
 		except:
 			pass
 
@@ -721,9 +725,24 @@ def lcd_bienvenida_linear(now):
 		if modo_serial == 'usb' and now == 5:
 			ser_lcd.write('agua igua!!!           salud!   '.encode())
 
-		if modo_serial == 'i2c':
-			#acá va lo de Jose Velarde
-			write_i2c(0,0,0,0)
+		if modo_serial == 'i2c' and now == 0:
+			cadena_i2c("mAs agua pura...   para Todos!!!")
+			#sleep(2)
+		if modo_serial == 'i2c' and now == 1:
+			cadena_i2c("cuida tu salud y la del planeta")
+			#sleep(2)
+		if modo_serial == 'i2c' and now == 2:
+			cadena_i2c("juntos contra      el plAstico!!")
+			#sleep(2)
+		if modo_serial == 'i2c' and now == 3:
+			cadena_i2c("f/aguaigua      http://igua.pe ")
+			#sleep(2)
+		if modo_serial == 'i2c' and now == 4:
+			cadena_i2c("hola mundo!!!   hola igua!!!")
+			#sleep(2)
+		if modo_serial == 'i2c' and now == 5:
+			cadena_i2c("agua igua!!!           salud!")
+			#sleep(2)
 	else:
 		pass
 
@@ -736,7 +755,7 @@ def lcd_bienvenida_pwyw(now):
 			if  now == 0:
 				ser_lcd.write('mAs agua pura...   para Todos!!!'.encode())
 			elif now == 1:
-				ser_lcd.write('cuida tu salud..y la del planeta'.encode())
+				ser_lcd.write('cuida tu salud y la del planeta'.encode())
 			elif now == 2:
 				ser_lcd.write('y la del planeta                '.encode())
 			elif now == 3:
@@ -786,12 +805,7 @@ def lcd_servidos_lt(servidos_lt,diff):
 		if button_state == GPIO.HIGH:
 			ser_lcd.write(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + ' l  ' + '          ... ' + str(format(diff, '.0f')) + 's').encode())
 	elif modo_serial == 'i2c':
-		litros_p1=int(servidos_lt//100)
-		litros_p2=int(servidos_lt % 100)
-		print(litros_p1)
-		print(litros_p2)
-		write_i2c(2,litros_p1,litros_p2,diff)
-		pass
+		cadena_i2c(('tienes: ' + str(format(servidos_lt/1000, '.3f')) + 'l  ' + '     ... ' + str(format(diff, '.0f')) + 's'))
 	else:
 		pass
 
@@ -802,7 +816,7 @@ def lcd_ozonizando():
 	if modo_serial == 'usb':
 		ser_lcd.write('... ozonizando ...              '.encode())
 	elif modo_serial == 'i2c':
-		#acá va lo de Jose Velarde
+		cadena_i2c('... ozonizando ...              ')
 		pass
 	else:
 		pass
@@ -813,7 +827,7 @@ def lcd_cancelando():
 	if modo_serial == 'usb':
 		ser_lcd.write('..gracias! ...       #tomaigua !'.encode())
 	elif modo_serial == 'i2c':
-		#acá va lo de Jose Velarde
+		cadena_i2c('..gracias! ...       #tomaigua !')
 		pass
 	else:
 		pass
@@ -823,7 +837,7 @@ def lcd_agradece():
 	if modo_serial == 'usb':
 		ser_lcd.write('... gracias !!!                 '.encode())
 	elif modo_serial == 'i2c':
-		write_i2c(3,0,0,0)
+		cadena_i2c('..gracias! ...       #tomaigua !')
 	else:
 		pass
 
@@ -835,7 +849,19 @@ def lcd_string(cadena):
 		else:
 			ser_lcd.write((cadena.ljust(32)).encode())
 	elif modo_serial == 'i2c':
-		#acá va lo de Jose Velarde
+		if len(cadena) > 32:
+			print('cadena mayor a 32 caracteres')
+		else:
+			cadena = cadena.ljust(32)
+
+		try:
+			bus.write_byte(0x05,38)
+			sleep(0.0001)
+			for char in cadena:
+				bus.write_byte(0x05,ord(char))
+				sleep(0.0001)
+		except:
+			pass
 		pass
 	else:
 		print('wrong modo_serial')
@@ -876,21 +902,23 @@ def set_accepting(valor):
 	if valor == 1:
 		GPIO.output(coinhibitor_relay, 0)
 
-def write_i2c(a,b,c,d):
-	try:
-		bus.write_i2c_block_data(add_lcd, a, [b, c, d])
-	except:
-		pass
-	sleep(0.1)
-	return -1
+def cadena_i2c(string):
+	
+	if len(string) > 32:
+		print('cadena mayor a 32 caracteres')
+	else:
+		string = string.ljust(32)
 
-def write_i2c_v2(a,b,c,d):
 	try:
-		bus.write_i2c_block_data(add_lcd, a, [b, c, d])
+		bus.write_byte(0x05,38)
+		sleep(0.0001)
+		for char in string:
+			bus.write_byte(0x05,ord(char))
+			sleep(0.0001)
 	except:
 		pass
-	sleep(0.1)
-	return -1
+	
+	return 
 
 '''
 def read_tds():
