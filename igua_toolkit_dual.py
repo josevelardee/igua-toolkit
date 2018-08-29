@@ -117,6 +117,9 @@ Baud = 460800
 
 
 ###########################################################
+# intentando conectar a inernet
+
+
 
 # instalando un logger
 import logging
@@ -508,9 +511,6 @@ def auth_on_gspread():
 		except:
 			print('no se logró cargar las hojas de accounts_data en drive de igua.devs')
 			logger.error('No se logró recuperar autenticaciòn en gspread.')
-
-#inicializamos con drive
-auth_on_gspread()
 
 
 
@@ -1110,6 +1110,14 @@ hora_de_ultimo_ozono = time.time()
 inicializaGPIO()
 
 
+lcd_string(' CONECTANDO ...              ...')
+print('se intetará marcar el modem....')
+os.system('sudo wvdial 3gconnect &')
+sleep(30)
+#inicializamos con drive
+auth_on_gspread()
+
+
 #MAIN LOOP
 while 1 == 1:
 
@@ -1129,7 +1137,14 @@ while 1 == 1:
 
 		ahora = time.time()
 		# print(ahora - hora_de_ultimo_ozono)
-		if (ahora - hora_de_ultimo_ozono) > 10:  #cada 20 minutos
+		if (ahora - hora_de_ultimo_ozono) > 500:
+			if is_connected() == False:
+				lcd_string('RECONECTANDO ...        loop  ...')
+				print('se intetará marcar el modem....')
+				os.system('sudo wvdial 3gconnect')
+				print('se intetará marcar el modem....')
+				delay(10)
+			# cada 20 minutos
 			# set_ozono(1)
 			# set_accepting(1) #deja de aceptar
 			# sleep(0.3)
@@ -1138,7 +1153,7 @@ while 1 == 1:
 			# set_ozono(0)
 			# set_accepting(0) #vuelve a aceptar
 			hora_de_ultimo_ozono = time.time()
-			print('estamos listos!')
+			print('ciclo de verificacion de conexion = 500 !')
 
 
     #leer aceptador de monedas
