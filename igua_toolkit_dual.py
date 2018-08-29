@@ -21,6 +21,61 @@
 # para manejar la hora sin rolos
 # pip3 install pytz
 #
+# para reproducir audio toca:
+# sudo apt-get install mpg123
+# 
+# para audio por PWM ademas, agregar:
+# dtoverlay=pwm-2chan,pin=18,func=2,pin2=13,func2=4
+# en:
+# sudo nano /boot/config.txt
+# tomado de:
+# https://www.youtube.com/watch?v=3pXB90IDNoY
+#
+# para instalar el modem ZTE MF 626 HSDPA
+# http://myhowtosandprojects.blogspot.com/2013/12/how-to-setup-usb-3g-modem-linux.html
+# parametros de este modem son:
+'''
+	########################################################
+	# ZTE MF622 (aka "Onda MDC502HS")
+	# ZTE MF626
+	# ZTE MF628+ (tested version from Telia / Sweden)
+	# ZTE MF633
+	# ZTE MF636 (aka "Telstra / BigPond 7.2 Mobile Card")
+	# ZTE MF637
+	# and probably others not listed here
+	#
+	# Contributor: Joakim Wennergren and others
+
+	DefaultVendor=  0x19d2
+	DefaultProduct= 0x2000
+
+	TargetVendor=   0x19d2
+	TargetProduct=  0x0031
+
+	MessageContent="5553424312345678000000000000061e000000000000000000000000000000"
+	MessageContent2="5553424312345679000000000000061b000000020000000000000000000000"
+
+	NeedResponse=1
+'''
+# para marcar el modem:
+'''
+lo que va adentro de /etc/wvdial.conf:
+
+[Dialer 3gconnect] 
+Init1 = ATZ 
+Init2 = ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0 
+Init3 = AT+CGDCONT=1,"IP","m2m.erictel.pe" 
+Stupid Mode = 1 
+Modem Type = Analog Modem 
+ISDN = 0 
+Phone = *99# 
+Modem = /dev/gsmmodem 
+Username = { } 
+Password = { } 
+Baud = 460800
+'''
+
+
 # además hay que incluir el archivo "IGUA_DRIVE_SECRET.json" dos veces:
 # una vez en la carpeta  ~/ y otra vez en la carpeta igua-toolkit
 #
@@ -89,7 +144,7 @@ from pynput.keyboard import Key, Listener
 import os
 
 #inicializando variables
-codigodemaquina = "IGUA_I2C_000_socoroo_test"
+codigodemaquina = "IGUA_I2C_000_socorro_test"
 modo_serial = 'i2c'  #puede ser 'usb' o 'i2c'   ojo Jose Velarde
 
 process_id = 0                  #
@@ -368,7 +423,7 @@ def on_press(key):
 			lcd_string(('>>> ' + keypadcreditbuffer).ljust(32))
 		elif modo_serial == 'i2c':
 			lcd_string(('>>> ' + keypadcreditbuffer))
-			sleep(0.5)
+			sleep(0.2)
 
 	elif process_id==3 and (key == Key.backspace or key == Key.enter):
 		print("se presiono backspace para cancelar tiempo de servida.")
@@ -696,7 +751,7 @@ def read_flw():
 			lectura_flujo = bus.read_i2c_block_data(add_flw,0,2)
 			if lectura_flujo [1]!=255:
 				string_flw=lectura_flujo [0]+lectura_flujo [1]*128
-				#print(str(lectura_flujo )+" = "+str(lectura_flujo [0]+lectura_flujo [1]*128))
+				print(str(lectura_flujo )+" = "+str(lectura_flujo [0]+lectura_flujo [1]*128))
 				sleep(0.01)
 		except:
 			pass
@@ -1206,7 +1261,7 @@ while 1 == 1:
 
 	# habilitada vavula y muestra litros
 	elif process_id == 3:
-		os.system('mpg123 -q iguino_sounds/_iguino_serving.mp3 &')
+		# os.system('mpg123 -q iguino_sounds/_iguino_serving.mp3 &')
 		set_accepting(1)
 		if modo_serial == 'usb':
 			ser_flw.write('a'.encode())
@@ -1237,16 +1292,18 @@ while 1 == 1:
 
 			if modo_serial == 'usb':
 				ser_flw.write('a'.encode())
+				sleep(0.1)
 			elif modo_serial == 'i2c':
 				#acá viene lo de Jose Velarde
 				pass
-			sleep(0.1)
+			
 			read_flw()   #este funciona para ambos modos
-
+			sleep(0.01)
+			
 			servidos_lt = float(int(string_flw)/10)*0.95
-			display_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
+			# display_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
 			lcd_servidos_lt((litros_servir - servidos_lt),30 - tiempo_desde_inicio_servida)
-			sleep(0.05)
+			
 
 			# el boton resetea el tiempo maximo y enciende la válvula
 			button_state = GPIO.input(button)
