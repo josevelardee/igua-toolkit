@@ -1106,14 +1106,24 @@ diff = 0
 # string_psi_psi3 = 0
 
 sleep(2)
+
 hora_de_ultimo_ozono = time.time()
+
+last_valve_state = "closed"
+current_valve_state = "closed"
+
+
+tiempo_ultimo_click = int(round(time.time() * 1000))
+tiempo_penultimo_click = tiempo_ultimo_click
+tiempo_entre_clicks = 10000
+
 inicializaGPIO()
 
 
-lcd_string(' CONECTANDO ...              ...')
+lcd_string(' CONECTANDO ..               ...')
 print('se intetará marcar el modem....')
 os.system('sudo wvdial 3gconnect &')
-sleep(30)
+sleep(15)
 #inicializamos con drive
 auth_on_gspread()
 
@@ -1144,6 +1154,8 @@ while 1 == 1:
 				os.system('sudo wvdial 3gconnect')
 				print('se intetará marcar el modem....')
 				delay(10)
+			else:
+				print('bien! seguimos conectados con erictel....')
 			# cada 20 minutos
 			# set_ozono(1)
 			# set_accepting(1) #deja de aceptar
@@ -1243,7 +1255,7 @@ while 1 == 1:
 		#print("diff vale:", cuenta_de_ciclos)
 
 
-		#tap_button pressed?
+		#se presiona el botón
 		button_state = GPIO.input(button)
 		if (button_state == GPIO.LOW) or (diff > 200):
 			diff = 0
@@ -1261,16 +1273,16 @@ while 1 == 1:
 			process_id = 2
 		else:
 			process_id = 1
-			# print ("button is NOT PRESSED")
+			
 
 	elif process_id == 2:
 		# enciende el pin de Ozono
-		set_ozono(0)
+		# set_ozono(0)
 		# muestra display "OZONIZANDO"
 		# lcd_ozonizando()
 		# espera N segs
-		sleep(0)
-		set_ozono(0)
+		# sleep(0)
+		# set_ozono(0)
 		# apaga el pin de Ozono
 		process_id = 3
 
@@ -1327,11 +1339,32 @@ while 1 == 1:
 				# print ("button is LOW - OR PRESSED")
 				# time.sleep(0.05)
 				set_valve(1)
+				last_valve_state = current_valve_state
+				current_valve_state = "open"
 
 			# el boton libre cierra la valvula
 			if button_state == GPIO.HIGH:
 				set_valve(0)
+				last_valve_state = current_valve_state
+				current_valve_state = "closed"
 				# print('se solto boton')
+				
+			# doble click
+			if last_valve_state == "closed" and current_valve_state == "open":
+				# flancosubida / se presionó
+				tiempo_penultimo_click = tiempo_ultimo_click
+				tiempo_ultimo_click = int(round(time.time() * 1000))
+				tiempo_entre_clicks = tiempo_ultimo_click - tiempo_penultimo_click
+				print("tiempo entre clicks: " + str(tiempo_entre_clicks))
+				if tiempo_entre_clicks < 200:
+					print("hubo un doble click")			
+				pass
+				
+			if last_valve_state == "open" and current_valve_state == "closed":
+				# flancobajada / se soltò
+				# no se hace nada
+				pass
+ 			
 
 			if (servidos_lt - litros_servir) > 0:  # si se pasa del limite a servir
 				print ("se pasó del volumen a servir")
